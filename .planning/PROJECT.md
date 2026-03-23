@@ -78,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — Phase 1 complete: parse/export contract, Express API, Alpine.js UI*
+*Last updated: 2026-03-23 — Phase 2 complete: dedup pipeline, fuzzy folder matching, merge review UI, POST /api/cleanup + /api/merge*
