@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 03-link-checker-01-PLAN.md
-last_updated: "2026-03-23T22:53:51.067Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-23T23:17:55.853Z"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -53,6 +53,7 @@ Plan: 2 of 2
 | Phase 02-core-cleanup P02 | 2min | 2 tasks | 5 files |
 | Phase 02-core-cleanup P03 | 30 | 3 tasks | 2 files |
 | Phase 03-link-checker P01 | 2 | 2 tasks | 4 files |
+| Phase 03-link-checker P02 | 35 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 03-link-checker]: HEAD-first link checker: GET fallback only on 405/network error, non-2xx HEAD is definitive; 429->uncertain, 401/403->ok; OG metadata only from GET HTML responses
 - [Phase 03-link-checker]: buildCheckedTree preserves empty folders — folder cleanup deferred to Phase 5 (CLASS-03)
 - [Phase 03-link-checker]: globalThis.fetch used at call time (not imported as binding) so TDD mocks propagate without module cache tricks
+- [Phase 03-link-checker]: SSE headers flushed before checkAll to prevent long pending connection; cancelled flag via req.on('close') guards all res.write calls
+- [Phase 03-link-checker]: fetchCheckedTree writes into this.cleanTree (not new field) so rerenderTree works without additional Alpine state
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T22:53:51.063Z
-Stopped at: Completed 03-link-checker-01-PLAN.md
+Last session: 2026-03-23T23:17:55.848Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

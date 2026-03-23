@@ -63,7 +63,7 @@ Plans:
 **Plans:** 1/2 plans executed
 Plans:
 - [x] 03-01-PLAN.md — TDD: Link checker engine (checkUrl, checkAll, buildCheckedTree) with mocked fetch tests
-- [ ] 03-02-PLAN.md — SSE route, session/export wiring, frontend progress UI, end-to-end verification
+- [x] 03-02-PLAN.md — SSE route, session/export wiring, frontend progress UI, end-to-end verification
 **UI hint**: yes
 
 ### Phase 4: Classifier and Structure

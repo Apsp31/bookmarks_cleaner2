@@ -19,7 +19,7 @@
 - [x] **LINK-02**: Confirmed dead links are removed from the output tree
 - [x] **LINK-03**: Rate-limited URLs (429 responses) are flagged as "could not verify" and kept in the output
 - [x] **LINK-04**: URLs returning 401 or 403 are treated as alive (protected pages exist)
-- [ ] **LINK-05**: User sees real-time progress during link checking: checked/total count, current URL being checked, estimated time remaining
+- [x] **LINK-05**: User sees real-time progress during link checking: checked/total count, current URL being checked, estimated time remaining
 
 ### Deduplication
 
@@ -90,7 +90,7 @@
 | LINK-02 | Phase 3 | Complete |
 | LINK-03 | Phase 3 | Complete |
 | LINK-04 | Phase 3 | Complete |
-| LINK-05 | Phase 3 | Pending |
+| LINK-05 | Phase 3 | Complete |
 | DEDUP-01 | Phase 2 | Complete |
 | DEDUP-02 | Phase 2 | Complete |
 | DEDUP-03 | Phase 2 | Complete |
