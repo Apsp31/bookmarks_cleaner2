@@ -22,8 +22,8 @@ A single clean, importable bookmark file where every link works, nothing is dupl
 - [ ] Detect and remove exact duplicate bookmarks (same URL regardless of title/location)
 - [ ] Detect and merge folders with identical or fuzzy-similar names (e.g. "Dev Tools" + "Developer Tools")
 - [ ] Detect and collapse fully duplicated folder trees
-- [ ] Classify bookmarks into a sensible category using: domain rules map → page metadata (fetched during link check) → free classification API fallback
-- [ ] Propose a target folder hierarchy derived from the bookmark collection (not too deep, not too wide)
+- [x] Classify bookmarks into a sensible category using: domain rules map → page metadata (fetched during link check) → free classification API fallback — *Validated in Phase 4: Classifier and Structure*
+- [x] Propose a target folder hierarchy derived from the bookmark collection (not too deep, not too wide) — *Validated in Phase 4: Classifier and Structure*
 - [ ] Present before/after tree UI: original structure on left, cleaned structure on right
 - [ ] Allow user to edit the proposed target structure before exporting (drag, rename, merge folders)
 - [ ] Export clean HTML bookmark file ready to import into Chrome
@@ -78,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — Phase 2 complete: dedup pipeline, fuzzy folder matching, merge review UI, POST /api/cleanup + /api/merge*
+*Last updated: 2026-03-23 — Phase 4 complete: classifier.js (143-entry domain rules + OG metadata fallback), hierarchyBuilder.js (max 3-level hierarchy), POST /api/classify route, frontend "Classify Bookmarks" button*
