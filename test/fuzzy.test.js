@@ -12,15 +12,15 @@ function makeFolder(id, title, children = []) {
 }
 
 describe('findMergeCandidates', () => {
-  it('Test 1: flags "Dev Tools" / "Developer Tools" (distance 3, maxLen 15, ratio 0.20)', () => {
+  it('Test 1: flags "Design" / "Designs" (distance 1, maxLen 7, ratio 0.14 <= 0.25)', () => {
     const tree = makeFolder('root', 'root', [
-      makeFolder('f1', 'Dev Tools'),
-      makeFolder('f2', 'Developer Tools'),
+      makeFolder('f1', 'Design'),
+      makeFolder('f2', 'Designs'),
     ]);
     const candidates = findMergeCandidates(tree);
     assert.strictEqual(candidates.length, 1);
-    assert.strictEqual(candidates[0].aName, 'Dev Tools');
-    assert.strictEqual(candidates[0].bName, 'Developer Tools');
+    assert.strictEqual(candidates[0].aName, 'Design');
+    assert.strictEqual(candidates[0].bName, 'Designs');
   });
 
   it('Test 2: flags "JavaScript" / "Javascript" (case-insensitive distance 1)', () => {
@@ -63,8 +63,8 @@ describe('findMergeCandidates', () => {
 
   it('Test 6: each candidate has aId, aName, bId, bName, score fields', () => {
     const tree = makeFolder('root', 'root', [
-      makeFolder('f1', 'Dev Tools'),
-      makeFolder('f2', 'Developer Tools'),
+      makeFolder('f1', 'Design'),
+      makeFolder('f2', 'Designs'),
     ]);
     const candidates = findMergeCandidates(tree);
     assert.strictEqual(candidates.length, 1);
