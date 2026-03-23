@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-23T12:22:06.912Z"
+status: Ready to execute
+stopped_at: Completed 02-core-cleanup/02-01-PLAN.md
+last_updated: "2026-03-23T19:02:45.590Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — core-cleanup
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 02 (core-cleanup) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Plan: Not started
 | Phase 01-foundation P01 | 6 | 2 tasks | 10 files |
 | Phase 01-foundation P02 | 2 | 2 tasks | 5 files |
 | Phase 01-foundation P03 | 30 | 2 tasks | 2 files |
+| Phase 02-core-cleanup P01 | 3 | 5 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: Router-per-file pattern: each route file exports a Router instance, mounted at /api in server.js
 - [Phase 01-foundation]: app.js loaded before Alpine CDN script so bookmarkApp component is registered before Alpine initialises the DOM
 - [Phase 01-foundation]: renderTree() vanilla JS for tree rendering because Alpine has no native recursive template support
+- [Phase 02-core-cleanup]: Spread searchParams.keys() before delete loop to avoid live iterator mutation bug in URL normalization
+- [Phase 02-core-cleanup]: fingerprintSubtree uses direct-children-only (not recursive) to avoid false positives from large parent folders
+- [Phase 02-core-cleanup]: collectFolders skips title === 'root' to prevent spurious merge candidates from the synthetic root node
 
 ### Pending Todos
 
@@ -81,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T12:22:06.908Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-core-cleanup/02-CONTEXT.md
+Last session: 2026-03-23T19:02:45.586Z
+Stopped at: Completed 02-core-cleanup/02-01-PLAN.md
+Resume file: None

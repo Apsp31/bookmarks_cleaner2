@@ -23,10 +23,10 @@
 
 ### Deduplication
 
-- [ ] **DEDUP-01**: App detects duplicate bookmarks by URL (after normalization) across the entire tree and retains only one copy
-- [ ] **DEDUP-02**: URL normalization strips UTM/tracking parameters (utm_*, fbclid, gclid), normalizes www prefix, strips trailing slashes, and normalizes http/https before comparison
-- [ ] **DEDUP-03**: App detects folders with similar names via fuzzy matching and proposes merging them (user must confirm before merge)
-- [ ] **DEDUP-04**: App detects fully duplicated folder subtrees (same name, same URL children) and proposes removing the redundant copy
+- [x] **DEDUP-01**: App detects duplicate bookmarks by URL (after normalization) across the entire tree and retains only one copy
+- [x] **DEDUP-02**: URL normalization strips UTM/tracking parameters (utm_*, fbclid, gclid), normalizes www prefix, strips trailing slashes, and normalizes http/https before comparison
+- [x] **DEDUP-03**: App detects folders with similar names via fuzzy matching and proposes merging them (user must confirm before merge)
+- [x] **DEDUP-04**: App detects fully duplicated folder subtrees (same name, same URL children) and proposes removing the redundant copy
 
 ### Classification
 
@@ -91,10 +91,10 @@
 | LINK-03 | Phase 3 | Pending |
 | LINK-04 | Phase 3 | Pending |
 | LINK-05 | Phase 3 | Pending |
-| DEDUP-01 | Phase 2 | Pending |
-| DEDUP-02 | Phase 2 | Pending |
-| DEDUP-03 | Phase 2 | Pending |
-| DEDUP-04 | Phase 2 | Pending |
+| DEDUP-01 | Phase 2 | Complete |
+| DEDUP-02 | Phase 2 | Complete |
+| DEDUP-03 | Phase 2 | Complete |
+| DEDUP-04 | Phase 2 | Complete |
 | CLASS-01 | Phase 4 | Pending |
 | CLASS-02 | Phase 4 | Pending |
 | CLASS-03 | Phase 5 | Pending |
