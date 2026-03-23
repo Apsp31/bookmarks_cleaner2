@@ -162,7 +162,7 @@ function renderTree(node, container, depth = 0, options = {}) {
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('bookmarkApp', () => ({
-    /** 'idle' | 'loading' | 'loaded' | 'cleaning' | 'cleaned' | 'error' */
+    /** 'idle' | 'loading' | 'loaded' | 'cleaning' | 'cleaned' | 'checking' | 'checked' | 'error' */
     status: 'idle',
 
     /** { bookmarkCount: number, folderCount: number } | null */
@@ -191,6 +191,18 @@ document.addEventListener('alpine:init', () => {
 
     /** The cleaned tree (separate from this.tree) */
     cleanTree: null,
+
+    /** Whether a link check is in progress */
+    isChecking: false,
+
+    /** Live progress from the SSE stream */
+    checkProgress: { checked: 0, total: 0, currentUrl: '', eta: null },
+
+    /** Dead link count from last check */
+    deadCount: 0,
+
+    /** Uncertain link count from last check (rate-limited 429s) */
+    uncertainCount: 0,
 
     /**
      * Core file handler — validates, triggers backup download, then POSTs to server.
@@ -384,6 +396,46 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
+    /** Start live link checking via SSE stream */
+    runLinkCheck() {
+      this.isChecking = true;
+      this.status = 'checking';
+      this.checkProgress = { checked: 0, total: 0, currentUrl: '', eta: null };
+      this.errorMsg = '';
+      const es = new EventSource('/api/check-links');
+      es.addEventListener('progress', (e) => {
+        this.checkProgress = JSON.parse(e.data);
+      });
+      es.addEventListener('done', (e) => {
+        const d = JSON.parse(e.data);
+        this.deadCount = d.deadCount;
+        this.uncertainCount = d.uncertainCount;
+        this.isChecking = false;
+        this.status = 'checked';
+        es.close();
+        this.fetchCheckedTree();
+      });
+      es.addEventListener('error', (e) => {
+        this.errorMsg = 'Link check failed. Please try again.';
+        this.isChecking = false;
+        this.status = 'cleaned';
+        es.close();
+      });
+    },
+
+    /** Fetch the checked tree from /api/check-result and re-render */
+    async fetchCheckedTree() {
+      try {
+        const res = await fetch('/api/check-result');
+        if (!res.ok) throw new Error('Failed to fetch results');
+        const data = await res.json();
+        this.cleanTree = data.tree;
+        this.rerenderTree();
+      } catch (err) {
+        this.errorMsg = 'Could not load check results.';
+      }
+    },
+
     /** Reset all state back to idle */
     resetApp() {
       this.status = 'idle';
@@ -396,6 +448,10 @@ document.addEventListener('alpine:init', () => {
       this.mergeCandidates = [];
       this.duplicateSubtrees = [];
       this.cleanTree = null;
+      this.isChecking = false;
+      this.checkProgress = { checked: 0, total: 0, currentUrl: '', eta: null };
+      this.deadCount = 0;
+      this.uncertainCount = 0;
 
       // Clear tree container if it still exists in DOM
       const container = this.$refs.treeContainer;

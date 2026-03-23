@@ -321,6 +321,62 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
+
+    .check-progress-panel {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .check-progress-panel h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .progress-bar-container {
+      background: #e0e0e0;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .progress-bar {
+      background: #4a90e2;
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-stats {
+      font-size: 0.95rem;
+      color: #444;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-current {
+      font-size: 0.8rem;
+      color: #888;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    .check-results-banner {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      color: #2e7d32;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -435,6 +491,7 @@
 
         <div class="actions">
           <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
+          <button class="btn-primary" @click="runLinkCheck()" :disabled="isChecking">Check Links</button>
           <button class="btn-link" @click="resetApp()">Load another file</button>
         </div>
 
@@ -448,6 +505,49 @@
         <div class="tree-panel">
           <h3>Cleaned structure</h3>
           <div x-ref="treeContainer" x-init="renderTree(cleanTree || tree, $el, 0, getTreeOptions())"></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Checking state -->
+    <template x-if="status === 'checking'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+        <div class="check-progress-panel">
+          <h3>Checking links...</h3>
+          <div class="progress-bar-container">
+            <div class="progress-bar" :style="'width: ' + (checkProgress.total > 0 ? Math.round(checkProgress.checked / checkProgress.total * 100) : 0) + '%'"></div>
+          </div>
+          <p class="progress-stats">
+            <strong x-text="checkProgress.checked"></strong> / <strong x-text="checkProgress.total"></strong> checked
+            <template x-if="checkProgress.eta !== null">
+              <span> &mdash; ~<strong x-text="checkProgress.eta"></strong>s remaining</span>
+            </template>
+          </p>
+          <p class="progress-current" x-text="checkProgress.currentUrl"></p>
+        </div>
+      </div>
+    </template>
+
+    <!-- Checked state -->
+    <template x-if="status === 'checked'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+        <div class="check-results-banner">
+          Link check complete &mdash;
+          <strong x-text="deadCount"></strong> dead links removed.
+          <template x-if="uncertainCount > 0">
+            <span> <strong x-text="uncertainCount"></strong> links could not be verified (rate-limited).</span>
+          </template>
+        </div>
+        <div x-show="errorMsg" class="error-msg" x-text="errorMsg"></div>
+        <div class="actions">
+          <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
+          <button class="btn-link" @click="resetApp()">Load another file</button>
+        </div>
+        <div class="tree-panel">
+          <h3>Checked structure</h3>
+          <div x-ref="treeContainer" x-init="rerenderTree()"></div>
         </div>
       </div>
     </template>
