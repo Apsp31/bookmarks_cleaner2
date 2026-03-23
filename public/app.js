@@ -16,10 +16,10 @@ function renderTree(node, container, depth = 0, options = {}) {
   if (!node) return;
 
   if (node.type === 'folder') {
-    // Skip the synthetic root wrapper — render its children directly at depth 0
+    // Skip the synthetic root wrapper — render its children as top-level folders
     if (depth === 0 && node.children) {
       for (const child of node.children) {
-        renderTree(child, container, 0, options);
+        renderTree(child, container, 1, options);
       }
       return;
     }
