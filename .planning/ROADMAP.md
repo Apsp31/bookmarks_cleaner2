@@ -44,7 +44,11 @@ Plans:
   2. Folders with similar names (e.g., "Dev Tools" and "Developer Tools") are flagged and the user must confirm before they are merged
   3. Fully duplicated folder subtrees are detected and the user is prompted to remove the redundant copy
   4. URL normalization correctly strips UTM parameters, fbclid, gclid, normalizes www prefix, trailing slashes, and http/https variants — verified by unit tests covering all seven patterns
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 02-01-PLAN.md — TDD: URL normalization, dedup tree walk, fuzzy folder matching, subtree fingerprinting
+- [ ] 02-02-PLAN.md — Backend routes: /api/cleanup, /api/merge, session extension, export fallback
+- [ ] 02-03-PLAN.md — Frontend: Run Cleanup button, merge review UI with inline badges, bulk approve
 
 ### Phase 3: Link Checker
 **Goal**: Users can check every bookmark URL for liveness and see real-time progress while the checker runs
@@ -91,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-23 |
-| 2. Core Cleanup | 0/? | Not started | - |
+| 2. Core Cleanup | 0/3 | Planned | - |
 | 3. Link Checker | 0/? | Not started | - |
 | 4. Classifier and Structure | 0/? | Not started | - |
 | 5. Editable UI | 0/? | Not started | - |
