@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-03-23
+revised: 2026-03-23
 ---
 
 # Phase 2 — UI Design Contract
@@ -34,16 +35,16 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Tree node vertical padding (`padding: 2px 0` = 4px total row height contribution) |
-| sm | 8px | Compact internal gaps (e.g. tree toggle + icon gap `gap: 0.35rem ≈ 5.6px` — round to 8px for new elements) |
+| sm | 8px | Compact internal gaps — badge icon-to-label gap, merge/keep button pair gap, tree toggle + icon gap |
 | md | 16px | Default element spacing, tree children indent (`padding-left: 1.25rem`) |
 | lg | 24px | Section padding, actions bar gap, backup banner padding |
 | xl | 32px | Page body padding (`padding: 2rem 1rem`) |
 | 2xl | 48px | Loading screen vertical padding (`padding: 3rem`) |
 | 3xl | 64px | Not actively used; available for future page-level breaks |
 
-Exceptions:
-- Badge inline gap (⚠️ icon next to folder label): 6px (between existing `gap: 0.35rem` label gap and 8px sm — use 6px to keep badge visually tight to folder name without using a non-multiple-of-4; acceptable single exception per D-04 inline badge requirement)
-- Merge/keep button pair gap: 8px (sm)
+Exceptions: none. All spacing values are multiples of 4.
+
+Note: The warning badge inline gap (⚠️ icon next to folder label) uses 8px (sm token). If visual tightness is needed, adjust via `letter-spacing` on the badge text or badge internal padding — do not introduce a non-grid value.
 
 Source: extracted from existing `public/index.html` CSS.
 
@@ -51,23 +52,36 @@ Source: extracted from existing `public/index.html` CSS.
 
 ## Typography
 
+Exactly 4 sizes, exactly 2 weights:
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 15px (0.95rem) | 400 regular | 1.5 |
-| Label / small | 14px (0.9rem) | 500 medium | 1.5 |
-| Tree folder name | 14px (0.9rem) | 500 medium | 1.4 |
-| Tree link URL | 12.5px (0.78rem) | 400 regular | 1.2 (single-line, ellipsis) |
-| Heading h1 | 24px (1.5rem) | 700 bold | 1.2 |
-| Panel label (h3 uppercase) | 13.6px (0.85rem) | 600 semibold | 1.2 |
+| Micro / badge text | 12px (0.75rem) | 400 regular | 1.2 |
+| Label / folder / button | 14px (0.875rem) | 400 regular | 1.5 |
+| Body / stats | 15px (0.95rem) | 400 regular | 1.5 |
+| Heading h1 | 24px (1.5rem) | 600 semibold | 1.2 |
 
-Weights in use: 400 (regular) and 600–700 (semibold/bold). New Phase 2 elements must use only these two weights.
+Weights in use: **400 (regular)** and **600 (semibold)** only.
 
-New elements introduced in Phase 2:
-- **Warning badge text** (⚠️ label): 12px, weight 500, color `#b45309` (amber-700 equivalent)
-- **Merge action buttons** (`[→ Merge into X]`, `[Keep separate]`): 13px, weight 500
-- **Cleanup stats line** (duplicates removed count): 15px (0.95rem), weight 400 — same as existing `.stats-line`
+Mapping of existing elements to the consolidated scale:
 
-Source: extracted from `public/index.html` existing CSS; new sizes chosen to match established scale.
+| Element | Previous | Consolidated |
+|---------|----------|-------------|
+| Tree link URL | 12.5px, weight 400 | 12px, weight 400 |
+| Merge action buttons (`.btn-merge`, `.btn-keep`) | 13px, weight 500 | 14px, weight 400 |
+| Panel label h3 uppercase | 13.6px (0.85rem), weight 600 | 14px, weight 600 |
+| Tree folder name | 14px, weight 500 | 14px, weight 400 |
+| Label / small | 14px, weight 500 | 14px, weight 400 |
+| Warning badge text | 12px, weight 500 | 12px, weight 400 |
+| Body / stats line | 15px, weight 400 | 15px, weight 400 (unchanged) |
+| Heading h1 | 24px, weight 700 | 24px, weight 600 |
+
+New Phase 2 elements:
+- **Warning badge text** (⚠️ label): 12px, weight 400, color `#92400e` (amber-800 equivalent)
+- **Merge action buttons** (`[→ Merge into X]`, `[Keep separate]`): 14px, weight 400
+- **Cleanup stats line** (duplicates removed count): 15px, weight 400 — same as existing `.stats-line`
+
+Source: extracted from `public/index.html` existing CSS; consolidated to 4 sizes and 2 weights per design contract rules.
 
 ---
 
@@ -110,6 +124,12 @@ Source: extracted from `public/index.html`; warning palette is new for Phase 2 i
 
 ---
 
+## Focal Point
+
+When `status === 'loaded'`, the primary visual anchor is the tree panel (`.tree-panel`) paired with the "Run Cleanup" CTA button. These two elements should be visually dominant — the tree panel occupies the main content area and the action bar containing "Run Cleanup" sits immediately above or below it at full width.
+
+---
+
 ## Component Inventory
 
 ### Existing (reuse without modification)
@@ -120,8 +140,8 @@ Source: extracted from `public/index.html`; warning palette is new for Phase 2 i
 | Link button | `.btn-link` | Used for "Load another file" |
 | Actions bar | `.actions` | flex row, `gap: 0.75rem`, wraps |
 | Tree panel | `.tree-panel` | white card, 1px border, 8px radius, 500px max-height, scrollable |
-| Tree panel heading | `.tree-panel h3` | 0.85rem, uppercase, letter-spaced, `#888` |
-| Stats line | `.stats-line` | 0.95rem, `#444`, used for loaded bookmark counts |
+| Tree panel heading | `.tree-panel h3` | 14px (0.875rem), uppercase, letter-spaced, `#888` |
+| Stats line | `.stats-line` | 15px (0.95rem), `#444`, used for loaded bookmark counts |
 | Backup banner | `.backup-banner` | green success banner — reuse for "cleanup complete" notification |
 | Error message | `.error-msg` | red error banner |
 | Spinner | `.spinner` | CSS animation, accent blue border-top |
@@ -133,9 +153,9 @@ Source: extracted from `public/index.html`; warning palette is new for Phase 2 i
 
 | Component | CSS class | Description |
 |-----------|-----------|-------------|
-| Warning badge | `.merge-badge` | Inline ⚠️ span next to folder label; amber bg `#fffbeb`, border `#fcd34d`, text `#92400e`, 11px font, 4px padding, 4px border-radius |
-| Merge action button | `.btn-merge` | Small inline button `[→ Merge into X]`; 12px, no border, `#4a90e2` text, underline on hover; appears after folder label in tree row |
-| Keep separate button | `.btn-keep` | Small inline button `[Keep separate]`; 12px, no border, `#888` text, underline on hover |
+| Warning badge | `.merge-badge` | Inline ⚠️ span next to folder label; amber bg `#fffbeb`, border `#fcd34d`, text `#92400e`, 12px font weight 400, 4px padding, 4px border-radius, gap to folder label 8px (sm token) |
+| Merge action button | `.btn-merge` | Small inline button `[→ Merge into X]`; 14px weight 400, no border, `#4a90e2` text, underline on hover; appears after folder label in tree row |
+| Keep separate button | `.btn-keep` | Small inline button `[Keep separate]`; 14px weight 400, no border, `#888` text, underline on hover |
 | Bulk approve button | `.btn-approve-all` | Full-width or floated-right button above tree; uses `.btn-primary` style but smaller padding `0.375rem 1rem`; label "Approve all merges (N)" |
 | Cleanup stats banner | `.cleanup-banner` | Reuses `.backup-banner` visual style; green; shows "Cleanup complete — X duplicates removed, Y folders merged" |
 
