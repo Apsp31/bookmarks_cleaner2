@@ -1,0 +1,64 @@
+# Project State
+
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2026-03-23)
+
+**Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
+**Current focus:** Phase 1 — Foundation
+
+## Current Position
+
+Phase: 1 of 5 (Foundation)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-03-23 — Roadmap created, all 20 v1 requirements mapped to 5 phases
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: -
+- Total execution time: -
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: -
+- Trend: -
+
+*Updated after each plan completion*
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- Stack: Node.js + Express 5 backend, Alpine.js frontend (CDN, no build step)
+- Parser: cheerio 1.2.0 for Netscape Bookmark Format; dedicated npm parsers are unmaintained
+- Concurrency: p-limit 7.3.0 (ESM-only, Node >=20); two-level ceiling required from the start
+- Classification: fixed taxonomy before any classifier code; taxonomy explosion is expensive to fix post-implementation
+- Link checker: 403/429 are "uncertain/blocked", not dead — must be decided before building the checker
+
+### Pending Todos
+
+None yet.
+
+### Blockers/Concerns
+
+- Phase 3 (Link Checker): HTTP engine has interacting constraints (global concurrency, per-domain ceiling, soft-404 probe, 429 backoff, redirect capture). Research recommends a focused spike against a real 100-URL sample before full implementation.
+- Phase 4 (Classifier): Taxonomy must be defined and locked before writing classifier code. Real-world Layer 1+2 coverage rate (estimated 40–60%) unknown until tested against real data.
+
+## Session Continuity
+
+Last session: 2026-03-23
+Stopped at: Roadmap written, STATE.md initialized — ready to plan Phase 1
+Resume file: None

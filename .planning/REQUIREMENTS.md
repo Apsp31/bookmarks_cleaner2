@@ -81,8 +81,6 @@
 
 ## Traceability
 
-*Populated during roadmap creation.*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FILE-01 | Phase 1 | Pending |
@@ -99,7 +97,7 @@
 | DEDUP-04 | Phase 2 | Pending |
 | CLASS-01 | Phase 4 | Pending |
 | CLASS-02 | Phase 4 | Pending |
-| CLASS-03 | Phase 2 | Pending |
+| CLASS-03 | Phase 5 | Pending |
 | STRUCT-01 | Phase 4 | Pending |
 | STRUCT-02 | Phase 4 | Pending |
 | UI-01 | Phase 5 | Pending |
@@ -113,4 +111,4 @@
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after initial definition*
+*Last updated: 2026-03-23 after roadmap creation*
