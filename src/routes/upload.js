@@ -42,6 +42,11 @@ router.post('/upload', upload.single('bookmarks'), (req, res) => {
 
   session.tree = tree;
   session.originalHtml = html;
+  session.cleanTree = null;
+  session.checkedTree = null;
+  session.mergeCandidates = [];
+  session.duplicateSubtrees = [];
+  session.classifiedTree = null;
 
   res.json({ tree, stats: { bookmarkCount, folderCount } });
 });
