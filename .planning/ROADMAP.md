@@ -29,7 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. App immediately shows a backup was saved before any processing begins
   3. User can click Export and receive a valid Netscape HTML file that Chrome can import without error
   4. A round-trip test (parse the original, export, re-parse the export) produces identical bookmark and folder counts
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Project setup, types, parser, exporter, and round-trip tests
+- [ ] 01-02-PLAN.md — Express server, session store, upload and export API routes
+- [ ] 01-03-PLAN.md — Frontend landing page with drop zone, backup, tree display, and export
 
 ### Phase 2: Core Cleanup
 **Goal**: Users can process a loaded bookmark file through deduplication and folder merging before any network calls are made
@@ -86,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/3 | Planning complete | - |
 | 2. Core Cleanup | 0/? | Not started | - |
 | 3. Link Checker | 0/? | Not started | - |
 | 4. Classifier and Structure | 0/? | Not started | - |
