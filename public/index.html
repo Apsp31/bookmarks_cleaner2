@@ -1,3 +1,328 @@
 <!DOCTYPE html>
-<html><head><title>Bookmark Cleaner</title></head>
-<body><h1>Bookmark Cleaner</h1><p>Loading...</p></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmark Cleaner</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="/app.js" defer></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+      color: #111;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed #aaa;
+      border-radius: 12px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      cursor: pointer;
+      background: #fff;
+      transition: border-color 0.15s, background 0.15s;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: #4a90e2;
+      background: #f0f7ff;
+    }
+
+    .drop-zone .icon {
+      font-size: 2.5rem;
+      opacity: 0.5;
+    }
+
+    .drop-zone h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .drop-zone p {
+      font-size: 0.9rem;
+      color: #666;
+      max-width: 480px;
+      line-height: 1.5;
+    }
+
+    .pick-btn {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .pick-btn:hover { background: #357abd; }
+
+    /* Loading */
+    .loading-msg {
+      text-align: center;
+      padding: 3rem;
+      color: #555;
+      font-size: 1rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 1.2em;
+      height: 1.2em;
+      border: 3px solid #ccc;
+      border-top-color: #4a90e2;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .error-msg {
+      background: #fff0f0;
+      border: 1px solid #f5c6cb;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      color: #c0392b;
+      margin-bottom: 1rem;
+    }
+
+    /* Backup banner */
+    .backup-banner {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      color: #2e7d32;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Stats */
+    .stats-line {
+      font-size: 0.95rem;
+      color: #444;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      padding: 0.5rem 1.25rem;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover { background: #357abd; }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: #4a90e2;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0.5rem 0;
+      text-decoration: underline;
+    }
+
+    .btn-link:hover { color: #357abd; }
+
+    /* Tree panel */
+    .tree-panel {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .tree-panel h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Tree nodes (injected by renderTree) */
+    .tree-node {
+      padding: 2px 0;
+    }
+
+    .tree-folder-header {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #333;
+      padding: 2px 0;
+    }
+
+    .tree-folder-header:hover { color: #4a90e2; }
+
+    .tree-toggle {
+      font-size: 0.7rem;
+      width: 1em;
+      display: inline-block;
+      text-align: center;
+      color: #888;
+      transition: transform 0.15s;
+    }
+
+    .tree-toggle.open { transform: rotate(90deg); }
+
+    .tree-folder-icon { font-size: 0.85rem; }
+
+    .tree-children {
+      padding-left: 1.25rem;
+      border-left: 1px solid #eee;
+      margin-left: 0.4rem;
+    }
+
+    .tree-link {
+      font-size: 0.875rem;
+      padding: 2px 0;
+    }
+
+    .tree-link .link-title {
+      color: #333;
+    }
+
+    .tree-link .link-url {
+      font-size: 0.78rem;
+      color: #999;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page" x-data="bookmarkApp">
+
+    <!-- Upload screen (idle) -->
+    <template x-if="status === 'idle' || status === 'error'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+
+        <div x-show="status === 'error'" class="error-msg" x-text="errorMsg"></div>
+
+        <label for="file-input">
+          <div
+            class="drop-zone"
+            :class="{ 'drag-over': isDragging }"
+            @dragover.prevent="isDragging = true"
+            @dragleave="isDragging = false"
+            @drop.prevent="onDrop($event)"
+          >
+            <div class="icon">&#128278;</div>
+            <h2>Drop your Chrome bookmarks here</h2>
+            <p>Check every link, remove duplicates, merge similar folders, and propose a clean structure. Drop your Chrome bookmarks export to get started.</p>
+            <span class="pick-btn">Choose file</span>
+          </div>
+        </label>
+
+        <input
+          id="file-input"
+          type="file"
+          accept=".html"
+          style="display:none"
+          @change="handleFileInput($event)"
+        >
+      </div>
+    </template>
+
+    <!-- Loading screen -->
+    <template x-if="status === 'loading'">
+      <div class="loading-msg">
+        <span class="spinner"></span>
+        Processing your bookmarks&hellip;
+      </div>
+    </template>
+
+    <!-- Loaded screen -->
+    <template x-if="status === 'loaded'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+
+        <div x-show="backupName" class="backup-banner">
+          Original saved to Downloads as <strong x-text="backupName"></strong>
+        </div>
+
+        <p class="stats-line">
+          Loaded
+          <strong x-text="stats ? stats.bookmarkCount.toLocaleString() : 0"></strong>
+          bookmarks across
+          <strong x-text="stats ? stats.folderCount.toLocaleString() : 0"></strong>
+          folders
+        </p>
+
+        <div class="actions">
+          <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
+          <button class="btn-link" @click="resetApp()">Load another file</button>
+        </div>
+
+        <div class="tree-panel">
+          <h3>Original structure</h3>
+          <div x-ref="treeContainer"></div>
+        </div>
+      </div>
+    </template>
+
+  </div>
+</body>
+</html>
