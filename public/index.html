@@ -249,6 +249,78 @@
       white-space: nowrap;
       max-width: 600px;
     }
+
+    /* Phase 2: Merge review badges and buttons */
+    .merge-badge {
+      display: inline-block;
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      font-size: 0.75rem;
+      font-weight: 400;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
+
+    .btn-merge {
+      background: none;
+      border: none;
+      color: #4a90e2;
+      font-size: 0.875rem;
+      font-weight: 400;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .btn-merge:hover { text-decoration: underline; }
+
+    .btn-keep {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 0.875rem;
+      font-weight: 400;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .btn-keep:hover { text-decoration: underline; }
+
+    .btn-approve-all {
+      padding: 0.375rem 1rem;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 400;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+    }
+
+    .btn-approve-all:hover { background: #357abd; }
+
+    .cleanup-banner {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      color: #2e7d32;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -312,12 +384,69 @@
         </p>
 
         <div class="actions">
+          <button class="btn-primary" @click="runCleanup()">Run Cleanup</button>
           <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
           <button class="btn-link" @click="resetApp()">Load another file</button>
         </div>
 
         <div class="tree-panel">
           <h3>Original structure</h3>
+          <div x-ref="treeContainer"></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Cleaning state -->
+    <template x-if="status === 'cleaning'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+        <div class="loading-msg">
+          <span class="spinner"></span>
+          Running cleanup&hellip;
+        </div>
+      </div>
+    </template>
+
+    <!-- Cleaned state -->
+    <template x-if="status === 'cleaned'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+
+        <!-- Cleanup stats banner -->
+        <div class="cleanup-banner">
+          <template x-if="cleanupStats && (cleanupStats.dupesRemoved > 0 || mergeCandidates.length > 0 || duplicateSubtrees.length > 0)">
+            <span>
+              Cleanup complete &mdash;
+              <strong x-text="cleanupStats.dupesRemoved"></strong> duplicate bookmarks removed.
+              <template x-if="mergeCandidates.length > 0 || duplicateSubtrees.length > 0">
+                <span>
+                  Review <strong x-text="mergeCandidates.length + duplicateSubtrees.length"></strong> folder merge suggestions below.
+                </span>
+              </template>
+            </span>
+          </template>
+          <template x-if="cleanupStats && cleanupStats.dupesRemoved === 0 && mergeCandidates.length === 0 && duplicateSubtrees.length === 0">
+            <span>Everything looks clean &mdash; no duplicates or similar folders found.</span>
+          </template>
+        </div>
+
+        <!-- Error message (for merge failures) -->
+        <div x-show="errorMsg" class="error-msg" x-text="errorMsg"></div>
+
+        <div class="actions">
+          <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
+          <button class="btn-link" @click="resetApp()">Load another file</button>
+        </div>
+
+        <!-- Bulk approve button (only when merge candidates exist) -->
+        <template x-if="mergeCandidates.length > 0 || duplicateSubtrees.length > 0">
+          <button class="btn-approve-all" @click="approveAllMerges()">
+            Approve all <span x-text="mergeCandidates.length + duplicateSubtrees.length"></span> merges
+          </button>
+        </template>
+
+        <div class="tree-panel">
+          <h3>Cleaned structure</h3>
           <div x-ref="treeContainer"></div>
         </div>
       </div>
