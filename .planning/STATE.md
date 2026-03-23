@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered (discuss mode)
-last_updated: "2026-03-23T01:26:24.916Z"
-last_activity: 2026-03-23 — Roadmap created, all 20 v1 requirements mapped to 5 phases
+status: Ready to execute
+stopped_at: Completed 01-foundation-01-01-PLAN.md
+last_updated: "2026-03-23T09:04:57.964Z"
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 01 — foundation
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-23 — Roadmap created, all 20 v1 requirements mapped to 5 phases
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 01 (foundation) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -52,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-foundation P01 | 6 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -65,6 +60,8 @@ Recent decisions affecting current work:
 - Concurrency: p-limit 7.3.0 (ESM-only, Node >=20); two-level ceiling required from the start
 - Classification: fixed taxonomy before any classifier code; taxonomy explosion is expensive to fix post-implementation
 - Link checker: 403/429 are "uncertain/blocked", not dead — must be decided before building the checker
+- [Phase 01-foundation]: children('dl').first() with nextAll fallback: htmlparser2 places child DL inside DT (not sibling) for Netscape format
+- [Phase 01-foundation]: escapeHtml replaces & first to prevent double-escaping; Number.isFinite guard prevents ADD_DATE=NaN in export
 
 ### Pending Todos
 
@@ -77,6 +74,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:26:24.912Z
-Stopped at: Phase 1 context gathered (discuss mode)
-Resume file: .planning/phases/01-foundation/01-CONTEXT.md
+Last session: 2026-03-23T09:04:57.960Z
+Stopped at: Completed 01-foundation-01-01-PLAN.md
+Resume file: None

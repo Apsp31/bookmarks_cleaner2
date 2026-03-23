@@ -9,9 +9,9 @@
 
 ### File I/O
 
-- [ ] **FILE-01**: User can load a Chrome bookmark HTML export via drag-and-drop or file picker
+- [x] **FILE-01**: User can load a Chrome bookmark HTML export via drag-and-drop or file picker
 - [ ] **FILE-02**: App automatically saves a backup of the original file on load (shown to user before any action)
-- [ ] **FILE-03**: User can export the final bookmark tree as a Chrome-importable Netscape HTML file
+- [x] **FILE-03**: User can export the final bookmark tree as a Chrome-importable Netscape HTML file
 
 ### Dead Link Checking
 
@@ -83,9 +83,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILE-01 | Phase 1 | Pending |
+| FILE-01 | Phase 1 | Complete |
 | FILE-02 | Phase 1 | Pending |
-| FILE-03 | Phase 1 | Pending |
+| FILE-03 | Phase 1 | Complete |
 | LINK-01 | Phase 3 | Pending |
 | LINK-02 | Phase 3 | Pending |
 | LINK-03 | Phase 3 | Pending |

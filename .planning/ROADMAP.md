@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A round-trip test (parse the original, export, re-parse the export) produces identical bookmark and folder counts
 **Plans:** 3 plans
 Plans:
-- [ ] 01-01-PLAN.md — Project setup, types, parser, exporter, and round-trip tests
+- [x] 01-01-PLAN.md — Project setup, types, parser, exporter, and round-trip tests
 - [ ] 01-02-PLAN.md — Express server, session store, upload and export API routes
 - [ ] 01-03-PLAN.md — Frontend landing page with drop zone, backup, tree display, and export
 
