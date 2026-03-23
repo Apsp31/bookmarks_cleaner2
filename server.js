@@ -3,6 +3,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import uploadRouter from './src/routes/upload.js';
 import exportRouter from './src/routes/export.js';
+import cleanupRouter from './src/routes/cleanup.js';
+import mergeRouter from './src/routes/merge.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -11,9 +13,14 @@ const PORT = process.env.PORT || 3000;
 // Serve static frontend from public/
 app.use(express.static(join(__dirname, 'public')));
 
+// Parse JSON request bodies
+app.use(express.json());
+
 // API routes
 app.use('/api', uploadRouter);
 app.use('/api', exportRouter);
+app.use('/api', cleanupRouter);
+app.use('/api', mergeRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

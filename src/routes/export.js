@@ -9,7 +9,7 @@ router.get('/export', (req, res) => {
     return res.status(404).json({ error: 'No bookmark file loaded. Upload a file first.' });
   }
 
-  const html = exportToNetscape(session.tree);
+  const html = exportToNetscape(session.cleanTree ?? session.tree);
 
   res.setHeader('Content-Type', 'text/html; charset=UTF-8');
   res.setHeader('Content-Disposition', 'attachment; filename="bookmarks-clean.html"');
