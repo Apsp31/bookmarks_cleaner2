@@ -15,10 +15,10 @@
 
 ### Dead Link Checking
 
-- [ ] **LINK-01**: App checks every bookmark URL via HTTP (HEAD-first, GET fallback) and marks confirmed dead links (non-2xx, timeout, DNS failure)
-- [ ] **LINK-02**: Confirmed dead links are removed from the output tree
-- [ ] **LINK-03**: Rate-limited URLs (429 responses) are flagged as "could not verify" and kept in the output
-- [ ] **LINK-04**: URLs returning 401 or 403 are treated as alive (protected pages exist)
+- [x] **LINK-01**: App checks every bookmark URL via HTTP (HEAD-first, GET fallback) and marks confirmed dead links (non-2xx, timeout, DNS failure)
+- [x] **LINK-02**: Confirmed dead links are removed from the output tree
+- [x] **LINK-03**: Rate-limited URLs (429 responses) are flagged as "could not verify" and kept in the output
+- [x] **LINK-04**: URLs returning 401 or 403 are treated as alive (protected pages exist)
 - [ ] **LINK-05**: User sees real-time progress during link checking: checked/total count, current URL being checked, estimated time remaining
 
 ### Deduplication
@@ -86,10 +86,10 @@
 | FILE-01 | Phase 1 | Complete |
 | FILE-02 | Phase 1 | Complete |
 | FILE-03 | Phase 1 | Complete |
-| LINK-01 | Phase 3 | Pending |
-| LINK-02 | Phase 3 | Pending |
-| LINK-03 | Phase 3 | Pending |
-| LINK-04 | Phase 3 | Pending |
+| LINK-01 | Phase 3 | Complete |
+| LINK-02 | Phase 3 | Complete |
+| LINK-03 | Phase 3 | Complete |
+| LINK-04 | Phase 3 | Complete |
 | LINK-05 | Phase 3 | Pending |
 | DEDUP-01 | Phase 2 | Complete |
 | DEDUP-02 | Phase 2 | Complete |

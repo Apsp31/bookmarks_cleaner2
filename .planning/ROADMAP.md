@@ -60,9 +60,9 @@ Plans:
   3. URLs returning 401 or 403 are treated as alive and kept in the output
   4. User sees a live progress indicator during checking: count checked out of total, current URL being tested, and estimated time remaining
   5. Checker uses two-level concurrency control (global ceiling and per-domain ceiling of 1-2) so the local network is not overwhelmed and CDN rate limits are not triggered
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 03-01-PLAN.md — TDD: Link checker engine (checkUrl, checkAll, buildCheckedTree) with mocked fetch tests
+- [x] 03-01-PLAN.md — TDD: Link checker engine (checkUrl, checkAll, buildCheckedTree) with mocked fetch tests
 - [ ] 03-02-PLAN.md — SSE route, session/export wiring, frontend progress UI, end-to-end verification
 **UI hint**: yes
 
@@ -99,6 +99,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-23 |
 | 2. Core Cleanup | 3/3 | Complete   | 2026-03-23 |
-| 3. Link Checker | 0/2 | In progress | - |
+| 3. Link Checker | 1/2 | In Progress|  |
 | 4. Classifier and Structure | 0/? | Not started | - |
 | 5. Editable UI | 0/? | Not started | - |
