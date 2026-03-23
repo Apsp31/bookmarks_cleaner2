@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 4 context gathered (auto mode)
-last_updated: "2026-03-23T23:27:35.370Z"
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-23T23:48:03.772Z"
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 03 — link-checker
+**Current focus:** Phase 04 — classifier-and-structure
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (classifier-and-structure) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Plan: Not started
 | Phase 02-core-cleanup P03 | 30 | 3 tasks | 2 files |
 | Phase 03-link-checker P01 | 2 | 2 tasks | 4 files |
 | Phase 03-link-checker P02 | 35 | 3 tasks | 6 files |
+| Phase 04-classifier-and-structure P01 | 159s | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,9 @@ Recent decisions affecting current work:
 - [Phase 03-link-checker]: globalThis.fetch used at call time (not imported as binding) so TDD mocks propagate without module cache tricks
 - [Phase 03-link-checker]: SSE headers flushed before checkAll to prevent long pending connection; cancelled flag via req.on('close') guards all res.write calls
 - [Phase 03-link-checker]: fetchCheckedTree writes into this.cleanTree (not new field) so rerenderTree works without additional Alpine state
+- [Phase 04-classifier-and-structure]: CATEGORY_KEYWORDS ordered specific-first to prevent greedy OG metadata matching
+- [Phase 04-classifier-and-structure]: v1 buildHierarchy skips sub-categorisation (pass-through), links flat under category folders
+- [Phase 04-classifier-and-structure]: byCategory Map drives folder creation so empty categories are never emitted (D-04)
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:27:35.366Z
-Stopped at: Phase 4 context gathered (auto mode)
-Resume file: .planning/phases/04-classifier-and-structure/04-CONTEXT.md
+Last session: 2026-03-23T23:48:03.768Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None

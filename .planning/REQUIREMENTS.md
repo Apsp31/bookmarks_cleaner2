@@ -30,14 +30,14 @@
 
 ### Classification
 
-- [ ] **CLASS-01**: App classifies each bookmark using a built-in domain→category rules map (github.com→Development, youtube.com→Video, reddit.com→Community, etc.)
-- [ ] **CLASS-02**: App extracts Open Graph tags and meta description from pages already fetched during link checking to classify domains not in the rules map
+- [x] **CLASS-01**: App classifies each bookmark using a built-in domain→category rules map (github.com→Development, youtube.com→Video, reddit.com→Community, etc.)
+- [x] **CLASS-02**: App extracts Open Graph tags and meta description from pages already fetched during link checking to classify domains not in the rules map
 - [ ] **CLASS-03**: App removes empty folders from the output after all other operations
 
 ### Structure
 
-- [ ] **STRUCT-01**: App proposes a new folder hierarchy derived from the bookmark collection, max 3 levels deep
-- [ ] **STRUCT-02**: Proposed hierarchy uses a sensible top-level taxonomy derived from the actual collection (not a fixed imposed structure)
+- [x] **STRUCT-01**: App proposes a new folder hierarchy derived from the bookmark collection, max 3 levels deep
+- [x] **STRUCT-02**: Proposed hierarchy uses a sensible top-level taxonomy derived from the actual collection (not a fixed imposed structure)
 
 ### User Interface
 
@@ -95,11 +95,11 @@
 | DEDUP-02 | Phase 2 | Complete |
 | DEDUP-03 | Phase 2 | Complete |
 | DEDUP-04 | Phase 2 | Complete |
-| CLASS-01 | Phase 4 | Pending |
-| CLASS-02 | Phase 4 | Pending |
+| CLASS-01 | Phase 4 | Complete |
+| CLASS-02 | Phase 4 | Complete |
 | CLASS-03 | Phase 5 | Pending |
-| STRUCT-01 | Phase 4 | Pending |
-| STRUCT-02 | Phase 4 | Pending |
+| STRUCT-01 | Phase 4 | Complete |
+| STRUCT-02 | Phase 4 | Complete |
 | UI-01 | Phase 5 | Pending |
 | UI-02 | Phase 5 | Pending |
 | UI-03 | Phase 5 | Pending |
