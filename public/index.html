@@ -391,7 +391,7 @@
 
         <div class="tree-panel">
           <h3>Original structure</h3>
-          <div x-ref="treeContainer"></div>
+          <div x-ref="treeContainer" x-init="renderTree(tree, $el, 0)"></div>
         </div>
       </div>
     </template>
@@ -447,7 +447,7 @@
 
         <div class="tree-panel">
           <h3>Cleaned structure</h3>
-          <div x-ref="treeContainer"></div>
+          <div x-ref="treeContainer" x-init="renderTree(cleanTree || tree, $el, 0, getTreeOptions())"></div>
         </div>
       </div>
     </template>

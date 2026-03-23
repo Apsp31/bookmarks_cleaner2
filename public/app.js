@@ -243,15 +243,7 @@ document.addEventListener('alpine:init', () => {
           this.tree = data.tree;
           this.stats = data.stats;
           this.status = 'loaded';
-
-          // Render tree once Alpine has updated the DOM
-          this.$nextTick(() => {
-            const container = this.$refs.treeContainer;
-            if (container) {
-              container.innerHTML = '';
-              renderTree(this.tree, container, 0);
-            }
-          });
+          // Tree rendered via x-init on the treeContainer element
         })
         .catch((err) => {
           this.errorMsg = err.message || 'An unexpected error occurred.';
@@ -363,27 +355,32 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    /** Build renderTree options object for the current review state */
+    getTreeOptions() {
+      const hasReview = this.mergeCandidates.length > 0 || this.duplicateSubtrees.length > 0;
+      if (!hasReview) return {};
+      return {
+        reviewMode: true,
+        mergeCandidates: this.mergeCandidates,
+        duplicateSubtrees: this.duplicateSubtrees,
+        onMerge: (c) => this.approveMerge(c),
+        onKeep: (c) => this.keepSeparate(c),
+        onRemoveDupe: (d) => this.removeDuplicateSubtree(d),
+        onKeepDupe: (d) => {
+          this.duplicateSubtrees = this.duplicateSubtrees.filter(
+            e => !(e.keepId === d.keepId && e.removeId === d.removeId)
+          );
+        },
+      };
+    },
+
     /** Re-render the tree container with current state (review mode if candidates exist) */
     rerenderTree() {
       this.$nextTick(() => {
         const container = this.$refs.treeContainer;
         if (!container) return;
         container.innerHTML = '';
-        const tree = this.cleanTree || this.tree;
-        const hasReviewItems = this.mergeCandidates.length > 0 || this.duplicateSubtrees.length > 0;
-        renderTree(tree, container, 0, hasReviewItems ? {
-          reviewMode: true,
-          mergeCandidates: this.mergeCandidates,
-          duplicateSubtrees: this.duplicateSubtrees,
-          onMerge: (c) => this.approveMerge(c),
-          onKeep: (c) => this.keepSeparate(c),
-          onRemoveDupe: (d) => this.removeDuplicateSubtree(d),
-          onKeepDupe: (d) => {
-            this.duplicateSubtrees = this.duplicateSubtrees.filter(
-              e => !(e.keepId === d.keepId && e.removeId === d.removeId)
-            );
-          },
-        } : {});
+        renderTree(this.cleanTree || this.tree, container, 0, this.getTreeOptions());
       });
     },
 
