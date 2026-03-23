@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 02-core-cleanup/02-01-PLAN.md
-last_updated: "2026-03-23T19:02:45.590Z"
+stopped_at: Completed 02-core-cleanup/02-02-PLAN.md
+last_updated: "2026-03-23T19:06:21.476Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 ## Current Position
 
 Phase: 02 (core-cleanup) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: 2 of 3
 | Phase 01-foundation P02 | 2 | 2 tasks | 5 files |
 | Phase 01-foundation P03 | 30 | 2 tasks | 2 files |
 | Phase 02-core-cleanup P01 | 3 | 5 tasks | 6 files |
+| Phase 02-core-cleanup P02 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 02-core-cleanup]: Spread searchParams.keys() before delete loop to avoid live iterator mutation bug in URL normalization
 - [Phase 02-core-cleanup]: fingerprintSubtree uses direct-children-only (not recursive) to avoid false positives from large parent folders
 - [Phase 02-core-cleanup]: collectFolders skips title === 'root' to prevent spurious merge candidates from the synthetic root node
+- [Phase 02-core-cleanup]: applyMerge two-pass strategy: collect remove-node children first, then rebuild tree — avoids needing parent pointers
+- [Phase 02-core-cleanup]: express.json() added to server.js before route mounts so all /api POST routes can receive JSON bodies
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T19:02:45.586Z
-Stopped at: Completed 02-core-cleanup/02-01-PLAN.md
+Last session: 2026-03-23T19:06:21.470Z
+Stopped at: Completed 02-core-cleanup/02-02-PLAN.md
 Resume file: None
