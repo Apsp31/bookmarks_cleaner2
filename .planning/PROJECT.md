@@ -12,11 +12,12 @@ A single clean, importable bookmark file where every link works, nothing is dupl
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Parse Chrome bookmark HTML export format — *Validated in Phase 1: Foundation*
+- [x] Export clean HTML bookmark file ready to import into Chrome — *Validated in Phase 1: Foundation*
+- [x] Run as a local Node.js server — no cloud dependency, no account required — *Validated in Phase 1: Foundation*
 
 ### Active
 
-- [ ] Parse Chrome bookmark HTML export format
 - [ ] Check every URL via HTTP and remove dead links (non-2xx, timeouts, connection refused)
 - [ ] Detect and remove exact duplicate bookmarks (same URL regardless of title/location)
 - [ ] Detect and merge folders with identical or fuzzy-similar names (e.g. "Dev Tools" + "Developer Tools")
@@ -77,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after initialization*
+*Last updated: 2026-03-23 — Phase 1 complete: parse/export contract, Express API, Alpine.js UI*
