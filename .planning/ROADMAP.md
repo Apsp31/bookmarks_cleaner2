@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Types, parser, exporter, and round-trip validation — the file I/O contract (completed 2026-03-23)
 - [x] **Phase 2: Core Cleanup** - Deduplication and fuzzy folder merging — pure pipeline logic, no network calls (completed 2026-03-23)
 - [ ] **Phase 3: Link Checker** - Concurrent dead-link detection with real-time SSE progress stream
-- [ ] **Phase 4: Classifier and Structure** - Category assignment and proposed 3-level hierarchy
+- [x] **Phase 4: Classifier and Structure** - Category assignment and proposed 3-level hierarchy (completed 2026-03-23)
 - [ ] **Phase 5: Editable UI** - Before/after tree view, context menu editing, summary panel, and export
 
 ## Phase Details
@@ -75,10 +75,10 @@ Plans:
   2. Bookmarks whose domains are not in the rules map are classified using Open Graph tags and meta description extracted during the link-check fetch -- no additional fetch is made
   3. App proposes a folder hierarchy no deeper than 3 levels, with top-level folders derived from the actual collection rather than a fixed imposed list
   4. Proposed hierarchy avoids taxonomy explosion -- top-level folder count is bounded and near-synonym categories are merged under one label
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 04-01-PLAN.md — TDD: classifier.js (domain rules + OG metadata) and hierarchyBuilder.js (3-level hierarchy)
-- [ ] 04-02-PLAN.md — Classify route, session/export wiring, frontend Classify Bookmarks button
+- [x] 04-02-PLAN.md — Classify route, session/export wiring, frontend Classify Bookmarks button
 
 ### Phase 5: Editable UI
 **Goal**: Users can review the before/after tree, adjust the proposed structure, and export the final clean bookmark file
@@ -103,5 +103,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 3/3 | Complete   | 2026-03-23 |
 | 2. Core Cleanup | 3/3 | Complete   | 2026-03-23 |
 | 3. Link Checker | 1/2 | In Progress|  |
-| 4. Classifier and Structure | 1/2 | In Progress|  |
+| 4. Classifier and Structure | 2/2 | Complete   | 2026-03-23 |
 | 5. Editable UI | 0/? | Not started | - |

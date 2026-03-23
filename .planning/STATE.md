@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-23T23:48:03.772Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-23T23:52:09.558Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -55,6 +55,7 @@ Plan: 2 of 2
 | Phase 03-link-checker P01 | 2 | 2 tasks | 4 files |
 | Phase 03-link-checker P02 | 35 | 3 tasks | 6 files |
 | Phase 04-classifier-and-structure P01 | 159s | 2 tasks | 4 files |
+| Phase 04-classifier-and-structure P02 | 113s | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 04-classifier-and-structure]: CATEGORY_KEYWORDS ordered specific-first to prevent greedy OG metadata matching
 - [Phase 04-classifier-and-structure]: v1 buildHierarchy skips sub-categorisation (pass-through), links flat under category folders
 - [Phase 04-classifier-and-structure]: byCategory Map drives folder creation so empty categories are never emitted (D-04)
+- [Phase 04-classifier-and-structure]: Upload route resets all downstream session fields (cleanTree, checkedTree, mergeCandidates, duplicateSubtrees, classifiedTree) to prevent stale data from previous file
+- [Phase 04-classifier-and-structure]: classifiedTree has highest priority in export chain (classifiedTree ?? checkedTree ?? cleanTree ?? tree)
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:48:03.768Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-23T23:52:09.554Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
