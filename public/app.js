@@ -10,15 +10,16 @@
  * @param {{ id: string, type: 'folder'|'link', title: string, url?: string, children?: object[] }} node
  * @param {HTMLElement} container
  * @param {number} depth
+ * @param {{ reviewMode?: boolean, mergeCandidates?: object[], duplicateSubtrees?: object[], onMerge?: Function, onKeep?: Function, onRemoveDupe?: Function, onKeepDupe?: Function }} options
  */
-function renderTree(node, container, depth = 0) {
+function renderTree(node, container, depth = 0, options = {}) {
   if (!node) return;
 
   if (node.type === 'folder') {
     // Skip the synthetic root wrapper — render its children directly at depth 0
     if (depth === 0 && node.children) {
       for (const child of node.children) {
-        renderTree(child, container, 0);
+        renderTree(child, container, 0, options);
       }
       return;
     }
@@ -44,6 +45,80 @@ function renderTree(node, container, depth = 0) {
     header.appendChild(folderIcon);
     header.appendChild(label);
 
+    if (options.reviewMode) {
+      // Check merge candidates
+      const mergeCandidate = (options.mergeCandidates || []).find(
+        c => c.aId === node.id || c.bId === node.id
+      );
+      if (mergeCandidate) {
+        const targetName = mergeCandidate.aId === node.id ? mergeCandidate.bName : mergeCandidate.aName;
+        const targetId = mergeCandidate.aId === node.id ? mergeCandidate.bId : mergeCandidate.aId;
+
+        const badge = document.createElement('span');
+        badge.className = 'merge-badge';
+        badge.textContent = '\u26a0\ufe0f Similar folder';
+
+        const btnMerge = document.createElement('button');
+        btnMerge.className = 'btn-merge';
+        // Merge direction: always merge INTO the first (aId) folder
+        const mergeTargetName = mergeCandidate.aId === node.id ? node.title : mergeCandidate.aName;
+        btnMerge.textContent = '\u2192 Merge into "' + mergeTargetName + '"';
+        btnMerge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (options.onMerge) options.onMerge(mergeCandidate);
+        });
+
+        const btnKeep = document.createElement('button');
+        btnKeep.className = 'btn-keep';
+        btnKeep.textContent = 'Keep separate';
+        btnKeep.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Remove badge+buttons from this row (client-side only, no API call per UI-SPEC)
+          badge.remove();
+          btnMerge.remove();
+          btnKeep.remove();
+          if (options.onKeep) options.onKeep(mergeCandidate);
+        });
+
+        header.appendChild(badge);
+        header.appendChild(btnMerge);
+        header.appendChild(btnKeep);
+      }
+
+      // Check duplicate subtrees
+      const dupeEntry = (options.duplicateSubtrees || []).find(
+        d => d.removeId === node.id
+      );
+      if (dupeEntry) {
+        const badge = document.createElement('span');
+        badge.className = 'merge-badge';
+        badge.textContent = '\u26a0\ufe0f Duplicate subtree';
+
+        const btnRemove = document.createElement('button');
+        btnRemove.className = 'btn-merge';
+        btnRemove.textContent = 'Remove duplicate subtree';
+        btnRemove.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (options.onRemoveDupe) options.onRemoveDupe(dupeEntry);
+        });
+
+        const btnKeepBoth = document.createElement('button');
+        btnKeepBoth.className = 'btn-keep';
+        btnKeepBoth.textContent = 'Keep both';
+        btnKeepBoth.addEventListener('click', (e) => {
+          e.stopPropagation();
+          badge.remove();
+          btnRemove.remove();
+          btnKeepBoth.remove();
+          if (options.onKeepDupe) options.onKeepDupe(dupeEntry);
+        });
+
+        header.appendChild(badge);
+        header.appendChild(btnRemove);
+        header.appendChild(btnKeepBoth);
+      }
+    }
+
     const childrenEl = document.createElement('div');
     childrenEl.className = 'tree-children';
     childrenEl.style.display = 'none'; // start collapsed
@@ -56,7 +131,7 @@ function renderTree(node, container, depth = 0) {
 
     if (node.children) {
       for (const child of node.children) {
-        renderTree(child, childrenEl, depth + 1);
+        renderTree(child, childrenEl, depth + 1, options);
       }
     }
 
@@ -87,7 +162,7 @@ function renderTree(node, container, depth = 0) {
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('bookmarkApp', () => ({
-    /** 'idle' | 'loading' | 'loaded' | 'error' */
+    /** 'idle' | 'loading' | 'loaded' | 'cleaning' | 'cleaned' | 'error' */
     status: 'idle',
 
     /** { bookmarkCount: number, folderCount: number } | null */
@@ -104,6 +179,18 @@ document.addEventListener('alpine:init', () => {
 
     /** Drag-over highlight flag */
     isDragging: false,
+
+    /** { dupesRemoved: number, duplicateSubtreesFound: number } | null */
+    cleanupStats: null,
+
+    /** Array of merge candidates from /api/cleanup */
+    mergeCandidates: [],
+
+    /** Array of duplicate subtree entries from /api/cleanup */
+    duplicateSubtrees: [],
+
+    /** The cleaned tree (separate from this.tree) */
+    cleanTree: null,
 
     /**
      * Core file handler — validates, triggers backup download, then POSTs to server.
@@ -188,6 +275,118 @@ document.addEventListener('alpine:init', () => {
       window.location.href = '/api/export';
     },
 
+    /** Run cleanup pipeline — dedup, find merge candidates, find duplicate subtrees */
+    async runCleanup() {
+      this.status = 'cleaning';
+      this.errorMsg = '';
+      try {
+        const res = await fetch('/api/cleanup', { method: 'POST' });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Cleanup failed');
+        }
+        const data = await res.json();
+        this.cleanTree = data.cleanTree;
+        this.cleanupStats = data.stats;
+        this.mergeCandidates = data.mergeCandidates || [];
+        this.duplicateSubtrees = data.duplicateSubtrees || [];
+        this.status = 'cleaned';
+        this.rerenderTree();
+      } catch (err) {
+        this.errorMsg = 'Cleanup failed \u2014 ' + (err.message || 'unknown error') + '. Your original bookmarks are unchanged.';
+        this.status = 'error';
+      }
+    },
+
+    /** Approve a single merge candidate */
+    async approveMerge(candidate) {
+      try {
+        const res = await fetch('/api/merge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pairs: [{ aId: candidate.aId, bId: candidate.bId }] }),
+        });
+        if (!res.ok) throw new Error('Merge failed');
+        const data = await res.json();
+        this.cleanTree = data.cleanTree;
+        this.mergeCandidates = data.mergeCandidates || [];
+        this.duplicateSubtrees = data.duplicateSubtrees || [];
+        this.rerenderTree();
+      } catch (err) {
+        this.errorMsg = 'Could not apply merge \u2014 please try again.';
+      }
+    },
+
+    /** Approve all merge candidates and duplicate subtrees at once */
+    async approveAllMerges() {
+      try {
+        const res = await fetch('/api/merge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approveAll: true }),
+        });
+        if (!res.ok) throw new Error('Merge failed');
+        const data = await res.json();
+        this.cleanTree = data.cleanTree;
+        this.mergeCandidates = data.mergeCandidates || [];
+        this.duplicateSubtrees = data.duplicateSubtrees || [];
+        this.rerenderTree();
+      } catch (err) {
+        this.errorMsg = 'Could not apply merge \u2014 please try again.';
+      }
+    },
+
+    /** Dismiss a merge candidate (client-side only — no API call) */
+    keepSeparate(candidate) {
+      this.mergeCandidates = this.mergeCandidates.filter(
+        c => !(c.aId === candidate.aId && c.bId === candidate.bId)
+      );
+      // DOM elements already removed by the click handler in renderTree
+    },
+
+    /** Remove a duplicate subtree via /api/merge */
+    async removeDuplicateSubtree(dupeEntry) {
+      try {
+        const res = await fetch('/api/merge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pairs: [{ aId: dupeEntry.keepId, bId: dupeEntry.removeId }] }),
+        });
+        if (!res.ok) throw new Error('Remove failed');
+        const data = await res.json();
+        this.cleanTree = data.cleanTree;
+        this.mergeCandidates = data.mergeCandidates || [];
+        this.duplicateSubtrees = data.duplicateSubtrees || [];
+        this.rerenderTree();
+      } catch (err) {
+        this.errorMsg = 'Could not apply merge \u2014 please try again.';
+      }
+    },
+
+    /** Re-render the tree container with current state (review mode if candidates exist) */
+    rerenderTree() {
+      this.$nextTick(() => {
+        const container = this.$refs.treeContainer;
+        if (!container) return;
+        container.innerHTML = '';
+        const tree = this.cleanTree || this.tree;
+        const hasReviewItems = this.mergeCandidates.length > 0 || this.duplicateSubtrees.length > 0;
+        renderTree(tree, container, 0, hasReviewItems ? {
+          reviewMode: true,
+          mergeCandidates: this.mergeCandidates,
+          duplicateSubtrees: this.duplicateSubtrees,
+          onMerge: (c) => this.approveMerge(c),
+          onKeep: (c) => this.keepSeparate(c),
+          onRemoveDupe: (d) => this.removeDuplicateSubtree(d),
+          onKeepDupe: (d) => {
+            this.duplicateSubtrees = this.duplicateSubtrees.filter(
+              e => !(e.keepId === d.keepId && e.removeId === d.removeId)
+            );
+          },
+        } : {});
+      });
+    },
+
     /** Reset all state back to idle */
     resetApp() {
       this.status = 'idle';
@@ -196,6 +395,10 @@ document.addEventListener('alpine:init', () => {
       this.backupName = '';
       this.errorMsg = '';
       this.isDragging = false;
+      this.cleanupStats = null;
+      this.mergeCandidates = [];
+      this.duplicateSubtrees = [];
+      this.cleanTree = null;
 
       // Clear tree container if it still exists in DOM
       const container = this.$refs.treeContainer;
