@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 02-core-cleanup/02-02-PLAN.md
-last_updated: "2026-03-23T19:06:21.476Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 02-core-cleanup/02-03-PLAN.md
+last_updated: "2026-03-23T21:54:48.792Z"
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 3 of 3
 | Phase 01-foundation P03 | 30 | 2 tasks | 2 files |
 | Phase 02-core-cleanup P01 | 3 | 5 tasks | 6 files |
 | Phase 02-core-cleanup P02 | 2min | 2 tasks | 5 files |
+| Phase 02-core-cleanup P03 | 30 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 02-core-cleanup]: collectFolders skips title === 'root' to prevent spurious merge candidates from the synthetic root node
 - [Phase 02-core-cleanup]: applyMerge two-pass strategy: collect remove-node children first, then rebuild tree — avoids needing parent pointers
 - [Phase 02-core-cleanup]: express.json() added to server.js before route mounts so all /api POST routes can receive JSON bodies
+- [Phase 02-core-cleanup]: x-init on treeContainer div instead of $nextTick: $refs not available for elements inside inactive x-if blocks
+- [Phase 02-core-cleanup]: renderTree called with depth=1 for root children: depth=0 guard silently skipped all folder rendering at top level
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T19:06:21.470Z
-Stopped at: Completed 02-core-cleanup/02-02-PLAN.md
+Last session: 2026-03-23T21:54:48.787Z
+Stopped at: Completed 02-core-cleanup/02-03-PLAN.md
 Resume file: None

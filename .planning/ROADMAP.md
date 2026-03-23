@@ -13,7 +13,7 @@ Five phases deliver a local web app that takes a messy Chrome bookmark export an
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Types, parser, exporter, and round-trip validation — the file I/O contract (completed 2026-03-23)
-- [ ] **Phase 2: Core Cleanup** - Deduplication and fuzzy folder merging — pure pipeline logic, no network calls
+- [x] **Phase 2: Core Cleanup** - Deduplication and fuzzy folder merging — pure pipeline logic, no network calls (completed 2026-03-23)
 - [ ] **Phase 3: Link Checker** - Concurrent dead-link detection with real-time SSE progress stream
 - [ ] **Phase 4: Classifier and Structure** - Category assignment and proposed 3-level hierarchy
 - [ ] **Phase 5: Editable UI** - Before/after tree view, context menu editing, summary panel, and export
@@ -44,11 +44,11 @@ Plans:
   2. Folders with similar names (e.g., "Dev Tools" and "Developer Tools") are flagged and the user must confirm before they are merged
   3. Fully duplicated folder subtrees are detected and the user is prompted to remove the redundant copy
   4. URL normalization correctly strips UTM parameters, fbclid, gclid, normalizes www prefix, trailing slashes, and http/https variants — verified by unit tests covering all seven patterns
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 02-01-PLAN.md — TDD: URL normalization, dedup tree walk, fuzzy folder matching, subtree fingerprinting
 - [x] 02-02-PLAN.md — Backend routes: /api/cleanup, /api/merge, session extension, export fallback
-- [ ] 02-03-PLAN.md — Frontend: Run Cleanup button, merge review UI with inline badges, bulk approve
+- [x] 02-03-PLAN.md — Frontend: Run Cleanup button, merge review UI with inline badges, bulk approve
 
 ### Phase 3: Link Checker
 **Goal**: Users can check every bookmark URL for liveness and see real-time progress while the checker runs
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-23 |
-| 2. Core Cleanup | 2/3 | In Progress|  |
+| 2. Core Cleanup | 3/3 | Complete   | 2026-03-23 |
 | 3. Link Checker | 0/? | Not started | - |
 | 4. Classifier and Structure | 0/? | Not started | - |
 | 5. Editable UI | 0/? | Not started | - |
