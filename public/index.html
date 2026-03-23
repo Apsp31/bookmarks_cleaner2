@@ -543,11 +543,42 @@
         <div x-show="errorMsg" class="error-msg" x-text="errorMsg"></div>
         <div class="actions">
           <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
+          <button class="btn-primary" @click="classifyBookmarks()" :disabled="isClassifying">Classify Bookmarks</button>
           <button class="btn-link" @click="resetApp()">Load another file</button>
         </div>
         <div class="tree-panel">
           <h3>Checked structure</h3>
           <div x-ref="treeContainer" x-init="rerenderTree()"></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Classifying state -->
+    <template x-if="status === 'classifying'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+        <div class="loading-msg">
+          <span class="spinner"></span>
+          Classifying bookmarks&hellip;
+        </div>
+      </div>
+    </template>
+
+    <!-- Classified state -->
+    <template x-if="status === 'classified'">
+      <div>
+        <h1>Bookmark Cleaner</h1>
+        <div class="check-results-banner">
+          Classification complete &mdash; bookmarks organised into category folders.
+        </div>
+        <div x-show="errorMsg" class="error-msg" x-text="errorMsg"></div>
+        <div class="actions">
+          <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
+          <button class="btn-link" @click="resetApp()">Load another file</button>
+        </div>
+        <div class="tree-panel">
+          <h3>Proposed structure</h3>
+          <div x-ref="treeContainer" x-init="$nextTick(() => { renderTree(classifiedTree, $el, 0, {}) })"></div>
         </div>
       </div>
     </template>

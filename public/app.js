@@ -162,7 +162,7 @@ function renderTree(node, container, depth = 0, options = {}) {
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('bookmarkApp', () => ({
-    /** 'idle' | 'loading' | 'loaded' | 'cleaning' | 'cleaned' | 'checking' | 'checked' | 'error' */
+    /** 'idle' | 'loading' | 'loaded' | 'cleaning' | 'cleaned' | 'checking' | 'checked' | 'classifying' | 'classified' | 'error' */
     status: 'idle',
 
     /** { bookmarkCount: number, folderCount: number } | null */
@@ -194,6 +194,12 @@ document.addEventListener('alpine:init', () => {
 
     /** Whether a link check is in progress */
     isChecking: false,
+
+    /** Whether classification is in progress */
+    isClassifying: false,
+
+    /** The classified tree from POST /api/classify */
+    classifiedTree: null,
 
     /** Live progress from the SSE stream */
     checkProgress: { checked: 0, total: 0, currentUrl: '', eta: null },
@@ -436,6 +442,34 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    /** Run classification pipeline via POST /api/classify */
+    async classifyBookmarks() {
+      this.isClassifying = true;
+      this.status = 'classifying';
+      this.errorMsg = '';
+      try {
+        const res = await fetch('/api/classify', { method: 'POST' });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Classification failed');
+        }
+        const data = await res.json();
+        this.classifiedTree = data.classifiedTree;
+        this.status = 'classified';
+        this.$nextTick(() => {
+          const container = this.$refs.treeContainer;
+          if (!container) return;
+          container.innerHTML = '';
+          renderTree(this.classifiedTree, container, 0, {});
+        });
+      } catch (err) {
+        this.errorMsg = 'Classification failed \u2014 ' + (err.message || 'unknown error');
+        this.status = 'checked';
+      } finally {
+        this.isClassifying = false;
+      }
+    },
+
     /** Reset all state back to idle */
     resetApp() {
       this.status = 'idle';
@@ -452,6 +486,8 @@ document.addEventListener('alpine:init', () => {
       this.checkProgress = { checked: 0, total: 0, currentUrl: '', eta: null };
       this.deadCount = 0;
       this.uncertainCount = 0;
+      this.classifiedTree = null;
+      this.isClassifying = false;
 
       // Clear tree container if it still exists in DOM
       const container = this.$refs.treeContainer;
