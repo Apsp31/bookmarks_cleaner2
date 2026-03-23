@@ -6,8 +6,11 @@
  * @property {string} [url] - Only present when type === 'link'
  * @property {number} [addDate] - Unix timestamp in seconds from ADD_DATE attribute
  * @property {BookmarkNode[]} [children] - Only present when type === 'folder'
- * @property {'ok'|'dead'|'redirect'|'pending'} [linkStatus] - Set by Phase 3
+ * @property {'ok'|'dead'|'uncertain'|'redirect'|'pending'} [linkStatus] - Set by Phase 3
  * @property {string} [category] - Set by Phase 4
+ * @property {{title?: string, description?: string, image?: string}} [metadata] - OG/meta tags from page fetch
+ * @property {string} [redirectUrl] - Original URL before redirect
+ * @property {string} [finalUrl] - Final URL after redirect
  */
 
 export {};
