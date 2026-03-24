@@ -129,6 +129,14 @@ function renderTree(node, container, depth = 0, options = {}) {
       toggle.classList.toggle('open', !isOpen);
     });
 
+    if (options.onContextMenu) {
+      header.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        options.onContextMenu(node, e);
+      });
+    }
+
     if (node.children) {
       for (const child of node.children) {
         renderTree(child, childrenEl, depth + 1, options);
@@ -142,6 +150,21 @@ function renderTree(node, container, depth = 0, options = {}) {
   } else if (node.type === 'link') {
     const wrapper = document.createElement('div');
     wrapper.className = 'tree-node tree-link';
+
+    if (options.onContextMenu) {
+      wrapper.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        options.onContextMenu(node, e);
+      });
+    }
+
+    // Add kept indicator
+    if (node.kept) {
+      const keptSpan = document.createElement('span');
+      keptSpan.className = 'kept-indicator';
+      keptSpan.textContent = '\u2713'; // checkmark
+      wrapper.appendChild(keptSpan);
+    }
 
     const title = document.createElement('span');
     title.className = 'link-title';
@@ -200,6 +223,18 @@ document.addEventListener('alpine:init', () => {
 
     /** The classified tree from POST /api/classify */
     classifiedTree: null,
+
+    /** Context menu state */
+    contextMenu: { visible: false, x: 0, y: 0, node: null },
+
+    /** Whether the move sub-menu is shown */
+    showMoveMenu: false,
+
+    /** Cached count of remaining links (updated after edits) */
+    remainingCount: 0,
+
+    /** Count of merged folders (snapshot from cleanup phase) */
+    mergedCount: 0,
 
     /** Live progress from the SSE stream */
     checkProgress: { checked: 0, total: 0, currentUrl: '', eta: null },
@@ -282,6 +317,7 @@ document.addEventListener('alpine:init', () => {
 
     /** Trigger export file download */
     exportBookmarks() {
+      this.contextMenu.visible = false;
       window.location.href = '/api/export';
     },
 
@@ -456,18 +492,73 @@ document.addEventListener('alpine:init', () => {
         const data = await res.json();
         this.classifiedTree = data.classifiedTree;
         this.status = 'classified';
-        this.$nextTick(() => {
-          const container = this.$refs.treeContainer;
-          if (!container) return;
-          container.innerHTML = '';
-          renderTree(this.classifiedTree, container, 0, {});
-        });
+        this.remainingCount = this.countLinks(this.classifiedTree);
+        this.mergedCount = this.mergeCandidates.length;
       } catch (err) {
         this.errorMsg = 'Classification failed \u2014 ' + (err.message || 'unknown error');
         this.status = 'checked';
       } finally {
         this.isClassifying = false;
       }
+    },
+
+    /** Count link nodes in a tree */
+    countLinks(node) {
+      if (!node) return 0;
+      if (node.type === 'link') return 1;
+      return (node.children ?? []).reduce((sum, child) => sum + this.countLinks(child), 0);
+    },
+
+    /** Open the floating context menu at click position */
+    openContextMenu(node, event) {
+      event.preventDefault();
+      this.showMoveMenu = false;
+      this.contextMenu = { visible: true, x: event.clientX, y: event.clientY, node };
+    },
+
+    /** Execute an edit operation via POST /api/edit */
+    async editOp(op, targetFolderId = undefined) {
+      this.contextMenu.visible = false;
+      this.showMoveMenu = false;
+      const body = { op, nodeId: this.contextMenu.node.id };
+      if (targetFolderId) body.targetFolderId = targetFolderId;
+      try {
+        const res = await fetch('/api/edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          this.errorMsg = data.error || 'Edit failed';
+          return;
+        }
+        const data = await res.json();
+        this.classifiedTree = data.classifiedTree;
+        this.remainingCount = this.countLinks(this.classifiedTree);
+        this.$nextTick(() => {
+          const container = this.$refs.rightPanel;
+          if (!container) return;
+          container.innerHTML = '';
+          renderTree(this.classifiedTree, container, 0, {
+            editMode: true,
+            onContextMenu: (n, e) => this.openContextMenu(n, e),
+          });
+        });
+      } catch (err) {
+        this.errorMsg = 'Edit failed — ' + (err.message || 'unknown error');
+      }
+    },
+
+    /** Get flat list of all folders in classifiedTree for the move sub-menu */
+    getFolderList() {
+      const folders = [];
+      function walk(node) {
+        if (node.type === 'folder' && node.title !== 'root') folders.push(node);
+        if (node.children) node.children.forEach(walk);
+      }
+      if (this.classifiedTree) walk(this.classifiedTree);
+      return folders;
     },
 
     /** Reset all state back to idle */
@@ -488,6 +579,10 @@ document.addEventListener('alpine:init', () => {
       this.uncertainCount = 0;
       this.classifiedTree = null;
       this.isClassifying = false;
+      this.contextMenu = { visible: false, x: 0, y: 0, node: null };
+      this.showMoveMenu = false;
+      this.remainingCount = 0;
+      this.mergedCount = 0;
 
       // Clear tree container if it still exists in DOM
       const container = this.$refs.treeContainer;

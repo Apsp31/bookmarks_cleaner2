@@ -377,6 +377,94 @@
       font-size: 0.9rem;
       margin-bottom: 1rem;
     }
+
+    /* Phase 5: Two-column layout */
+    .page.wide { max-width: 1200px; }
+
+    .two-col-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .summary-panel {
+      background: #f0f4ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    .summary-panel .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .summary-panel .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #4a90e2;
+    }
+
+    .summary-panel .stat-label {
+      font-size: 0.78rem;
+      color: #666;
+    }
+
+    /* Floating context menu */
+    .context-menu {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 180px;
+      z-index: 1000;
+      padding: 4px 0;
+    }
+
+    .context-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 14px;
+      border: none;
+      background: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .context-menu button:hover {
+      background: #f0f4ff;
+      color: #4a90e2;
+    }
+
+    .context-menu .folder-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border-top: 1px solid #eee;
+      padding: 4px 0;
+    }
+
+    .context-menu .folder-list button {
+      padding: 6px 14px 6px 24px;
+      font-size: 0.8rem;
+    }
+
+    /* Kept indicator */
+    .kept-indicator {
+      color: #16a34a;
+      font-size: 0.8rem;
+      margin-right: 4px;
+    }
+
+    [x-cloak] { display: none !important; }
   </style>
 </head>
 <body>
@@ -566,22 +654,77 @@
 
     <!-- Classified state -->
     <template x-if="status === 'classified'">
-      <div>
+      <div class="wide-wrapper" x-init="$el.closest('.page').classList.add('wide')">
         <h1>Bookmark Cleaner</h1>
+
         <div class="check-results-banner">
-          Classification complete &mdash; bookmarks organised into category folders.
+          Classification complete — bookmarks organised into category folders.
         </div>
+
         <div x-show="errorMsg" class="error-msg" x-text="errorMsg"></div>
+
+        <!-- Summary panel (UI-03) -->
+        <div class="summary-panel">
+          <div class="stat">
+            <span class="stat-value" x-text="deadCount"></span>
+            <span class="stat-label">Dead links removed</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" x-text="cleanupStats ? cleanupStats.dupesRemoved : 0"></span>
+            <span class="stat-label">Duplicates removed</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" x-text="mergedCount"></span>
+            <span class="stat-label">Folders merged</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" x-text="remainingCount"></span>
+            <span class="stat-label">Bookmarks remaining</span>
+          </div>
+        </div>
+
         <div class="actions">
           <button class="btn-primary" @click="exportBookmarks()">Export Clean File</button>
           <button class="btn-link" @click="resetApp()">Load another file</button>
         </div>
-        <div class="tree-panel">
-          <h3>Proposed structure</h3>
-          <div x-ref="treeContainer" x-init="$nextTick(() => { renderTree(classifiedTree, $el, 0, {}) })"></div>
+
+        <!-- Two-column layout (UI-01) -->
+        <div class="two-col-layout">
+          <div class="tree-panel">
+            <h3>Original structure</h3>
+            <div x-ref="leftPanel" x-init="renderTree(tree, $el, 0, {})"></div>
+          </div>
+          <div class="tree-panel">
+            <h3>Proposed structure</h3>
+            <div x-ref="rightPanel" x-init="renderTree(classifiedTree, $el, 0, { editMode: true, onContextMenu: (node, e) => openContextMenu(node, e) })"></div>
+          </div>
         </div>
       </div>
     </template>
+
+    <!-- Floating context menu (UI-02) -->
+    <div
+      x-show="contextMenu.visible"
+      x-cloak
+      :style="`position:fixed; left:${contextMenu.x}px; top:${contextMenu.y}px`"
+      class="context-menu"
+      @click.outside="contextMenu.visible = false"
+    >
+      <button @click="editOp('delete')">Delete</button>
+      <button @click="editOp('keep')">Mark as Keep</button>
+      <button @click="showMoveMenu = !showMoveMenu">Move to folder...</button>
+      <template x-if="showMoveMenu">
+        <div class="folder-list">
+          <template x-for="folder in getFolderList()" :key="folder.id">
+            <button
+              x-text="folder.title"
+              @click="editOp('move', folder.id)"
+              x-show="contextMenu.node && folder.id !== contextMenu.node.id"
+            ></button>
+          </template>
+        </div>
+      </template>
+    </div>
 
   </div>
 </body>
