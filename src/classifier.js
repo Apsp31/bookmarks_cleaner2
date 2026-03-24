@@ -2,11 +2,12 @@
  * Classifier Pipeline
  *
  * Exports:
- *   DOMAIN_RULES            – plain object mapping hostname → category label (~50-100 entries)
+ *   DOMAIN_RULES            – plain object mapping hostname → category label (~300 entries)
  *   CATEGORY_KEYWORDS       – object mapping category → keyword array (ordered specific-first)
  *   classifyByDomain(url)   – looks up hostname in DOMAIN_RULES, strips www. prefix
  *   classifyByMetadata(m)   – keyword-scans OG title+description, returns first match or null
- *   classifyNode(node)      – chains domain→metadata→'Other', returns new node (no mutation)
+ *   classifyByPath(url)     – matches URL path/subdomain patterns as 3rd fallback step
+ *   classifyNode(node)      – chains domain→metadata→path→'Other', returns new node (no mutation)
  *   classifyTree(node)      – deep-walks BookmarkNode tree, classifying all link nodes
  */
 
@@ -49,6 +50,41 @@ export const DOMAIN_RULES = {
   'graphql.org':            'Development',
   'openai.com':             'Development',
   'huggingface.co':         'Development',
+  'angular.io':             'Development',
+  'vuejs.org':              'Development',
+  'reactjs.org':            'Development',
+  'svelte.dev':             'Development',
+  'nextjs.org':             'Development',
+  'nuxt.com':               'Development',
+  'rust-lang.org':          'Development',
+  'go.dev':                 'Development',
+  'elixir-lang.org':        'Development',
+  'ruby-lang.org':          'Development',
+  'php.net':                'Development',
+  'spring.io':              'Development',
+  'webpack.js.org':         'Development',
+  'vitejs.dev':             'Development',
+  'bun.sh':                 'Development',
+  'deno.land':              'Development',
+  'supabase.com':           'Development',
+  'firebase.google.com':    'Development',
+  'redis.io':               'Development',
+  'postgresql.org':         'Development',
+  'mysql.com':              'Development',
+  'mongodb.com':            'Development',
+  'elastic.co':             'Development',
+  'nginx.org':              'Development',
+  'apache.org':             'Development',
+  'git-scm.com':            'Development',
+  'node.js.org':            'Development',
+  'typescriptlang.org':     'Development',
+  'eslint.org':             'Development',
+  'prettier.io':            'Development',
+  'jestjs.io':              'Development',
+  'vitest.dev':             'Development',
+  'playwright.dev':         'Development',
+  'cypress.io':             'Development',
+  'storybook.js.org':       'Development',
 
   // Video
   'youtube.com':            'Video',
@@ -60,6 +96,19 @@ export const DOMAIN_RULES = {
   'primevideo.com':         'Video',
   'disneyplus.com':         'Video',
   'hulu.com':               'Video',
+  'crunchyroll.com':        'Video',
+  'plex.tv':                'Video',
+  'peacocktv.com':          'Video',
+  'paramountplus.com':      'Video',
+  'curiositystream.com':    'Video',
+  'nebula.tv':              'Video',
+  'rumble.com':             'Video',
+  'odysee.com':             'Video',
+  'tubi.tv':                'Video',
+  'pluto.tv':               'Video',
+  'appletv.apple.com':      'Video',
+  'mubi.com':               'Video',
+  'criterion.com':          'Video',
 
   // Social / Community
   'reddit.com':             'Social / Community',
@@ -79,6 +128,19 @@ export const DOMAIN_RULES = {
   'facebook.com':           'Social / Community',
   'instagram.com':          'Social / Community',
   'pinterest.com':          'Social / Community',
+  'threads.net':            'Social / Community',
+  'bsky.app':               'Social / Community',
+  'lemmy.world':            'Social / Community',
+  'tumblr.com':             'Social / Community',
+  'quora.com':              'Social / Community',
+  'goodreads.com':          'Social / Community',
+  'letterboxd.com':         'Social / Community',
+  'producthunt.com':        'Social / Community',
+  'cohost.org':             'Social / Community',
+  'snapchat.com':           'Social / Community',
+  'tiktok.com':             'Social / Community',
+  'clubhouse.com':          'Social / Community',
+  'meetup.com':             'Social / Community',
 
   // News
   'bbc.com':                'News',
@@ -96,6 +158,24 @@ export const DOMAIN_RULES = {
   'bbc.co.uk':              'News',
   'ft.com':                 'News',
   'economist.com':          'News',
+  'engadget.com':           'News',
+  'zdnet.com':              'News',
+  'thenextweb.com':         'News',
+  'slashdot.org':           'News',
+  'vice.com':               'News',
+  'vox.com':                'News',
+  'politico.com':           'News',
+  'theatlantic.com':        'News',
+  'newyorker.com':          'News',
+  'theintercept.com':       'News',
+  'propublica.org':         'News',
+  'axios.com':              'News',
+  'bleepingcomputer.com':   'News',
+  'hackernoon.com':         'News',
+  'hbr.org':                'News',
+  'scientificamerican.com': 'News',
+  'nature.com':             'News',
+  'time.com':               'News',
 
   // Shopping
   'amazon.com':             'Shopping',
@@ -107,6 +187,22 @@ export const DOMAIN_RULES = {
   'walmart.com':            'Shopping',
   'target.com':             'Shopping',
   'ikea.com':               'Shopping',
+  'newegg.com':             'Shopping',
+  'bhphotovideo.com':       'Shopping',
+  'costco.com':             'Shopping',
+  'homedepot.com':          'Shopping',
+  'lowes.com':              'Shopping',
+  'wayfair.com':            'Shopping',
+  'zappos.com':             'Shopping',
+  'nordstrom.com':          'Shopping',
+  'macys.com':              'Shopping',
+  'asos.com':               'Shopping',
+  'zara.com':               'Shopping',
+  'uniqlo.com':             'Shopping',
+  'gap.com':                'Shopping',
+  'adidas.com':             'Shopping',
+  'nike.com':               'Shopping',
+  'temu.com':               'Shopping',
 
   // Tools
   'notion.so':              'Tools',
@@ -123,6 +219,23 @@ export const DOMAIN_RULES = {
   'crontab.guru':           'Tools',
   'excalidraw.com':         'Tools',
   'draw.io':                'Tools',
+  'miro.com':               'Tools',
+  '1password.com':          'Tools',
+  'bitwarden.com':          'Tools',
+  'todoist.com':            'Tools',
+  'clickup.com':            'Tools',
+  'monday.com':             'Tools',
+  'basecamp.com':           'Tools',
+  'postman.com':            'Tools',
+  'insomnia.rest':          'Tools',
+  'grammarly.com':          'Tools',
+  'calendly.com':           'Tools',
+  'loom.com':               'Tools',
+  'zoom.us':                'Tools',
+  'hemingwayapp.com':       'Tools',
+  'tableplus.com':          'Tools',
+  'iterm2.com':             'Tools',
+  'raycast.com':            'Tools',
 
   // Reference
   'wikipedia.org':          'Reference',
@@ -135,6 +248,23 @@ export const DOMAIN_RULES = {
   'web.archive.org':        'Reference',
   'scholar.google.com':     'Reference',
   'arxiv.org':              'Reference',
+  'britannica.com':         'Reference',
+  'snopes.com':             'Reference',
+  'factcheck.org':          'Reference',
+  'thesaurus.com':          'Reference',
+  'etymonline.com':         'Reference',
+  'worldcat.org':           'Reference',
+  'jstor.org':              'Reference',
+  'pubmed.ncbi.nlm.nih.gov': 'Reference',
+  'semanticscholar.org':    'Reference',
+  'researchgate.net':       'Reference',
+  'plato.stanford.edu':     'Reference',
+  'ieeexplore.ieee.org':    'Reference',
+  'acm.org':                'Reference',
+  'rfc-editor.org':         'Reference',
+  'w3.org':                 'Reference',
+  'ecma-international.org': 'Reference',
+  'ietf.org':               'Reference',
 
   // Design
   'figma.com':              'Design',
@@ -151,6 +281,24 @@ export const DOMAIN_RULES = {
   'svgomg.net':             'Design',
   'icones.js.org':          'Design',
   'heroicons.com':          'Design',
+  'tailwindcss.com':        'Design',
+  'canva.com':              'Design',
+  'adobe.com':              'Design',
+  'invisionapp.com':        'Design',
+  'zeplin.io':              'Design',
+  'framer.com':             'Design',
+  'webflow.com':            'Design',
+  'uicolors.app':           'Design',
+  'colorhunt.co':           'Design',
+  'svgrepo.com':            'Design',
+  'iconmonstr.com':         'Design',
+  'flaticon.com':           'Design',
+  'undraw.co':              'Design',
+  'lottiefiles.com':        'Design',
+  'rive.app':               'Design',
+  'spline.design':          'Design',
+  'motionarray.com':        'Design',
+  'envato.com':             'Design',
 
   // Finance
   'bloomberg.com':          'Finance',
@@ -164,6 +312,25 @@ export const DOMAIN_RULES = {
   'chase.com':              'Finance',
   'paypal.com':             'Finance',
   'stripe.com':             'Finance',
+  'morningstar.com':        'Finance',
+  'seekingalpha.com':       'Finance',
+  'fool.com':               'Finance',
+  'nerdwallet.com':         'Finance',
+  'creditkarma.com':        'Finance',
+  'sofi.com':               'Finance',
+  'wealthsimple.com':       'Finance',
+  'fidelity.com':           'Finance',
+  'schwab.com':             'Finance',
+  'etrade.com':             'Finance',
+  'revolut.com':            'Finance',
+  'wise.com':               'Finance',
+  'kraken.com':             'Finance',
+  'gemini.com':             'Finance',
+  'coinmarketcap.com':      'Finance',
+  'coingecko.com':          'Finance',
+  'tradingview.com':        'Finance',
+  'wellsfargo.com':         'Finance',
+  'capitalone.com':         'Finance',
 
   // Learning
   'coursera.org':           'Learning',
@@ -179,6 +346,26 @@ export const DOMAIN_RULES = {
   'leetcode.com':           'Learning',
   'exercism.org':           'Learning',
   'brilliant.org':          'Learning',
+  'skillshare.com':         'Learning',
+  'masterclass.com':        'Learning',
+  'treehouse.com':          'Learning',
+  'datacamp.com':           'Learning',
+  'kaggle.com':             'Learning',
+  'hackerrank.com':         'Learning',
+  'codewars.com':           'Learning',
+  'topcoder.com':           'Learning',
+  'scrimba.com':            'Learning',
+  'laracasts.com':          'Learning',
+  'designcode.io':          'Learning',
+  'academicearth.org':      'Learning',
+  'openculture.com':        'Learning',
+  'mit.edu':                'Learning',
+  'ocw.mit.edu':            'Learning',
+  'open.edu':               'Learning',
+  'futurelearn.com':        'Learning',
+  'duolingo.com':           'Learning',
+  'babbel.com':             'Learning',
+  'rosettastone.com':       'Learning',
 };
 
 // ─── Category keywords ────────────────────────────────────────────────────────
@@ -272,11 +459,56 @@ export function classifyByMetadata(metadata) {
   return null;
 }
 
+// ─── classifyByPath ───────────────────────────────────────────────────────────
+
+/**
+ * Classify a URL by inspecting its path and subdomain as structural signals.
+ * Used as the 3rd fallback step after domain rules and OG metadata both fail.
+ *
+ * Subdomain signals (raw hostname, NOT www-stripped — docs.example.com is a hint):
+ *   docs.* / documentation.*  → Reference
+ *   blog.*                    → News
+ *   shop.* / store.*          → Shopping
+ *
+ * Path signals (case-insensitive):
+ *   /docs/ or /documentation/ → Reference
+ *   /blog/ or /news/          → News
+ *   /shop/ or /store/         → Shopping
+ *   /api/                     → Development
+ *
+ * Note: domain rules take priority — a github.com/blog/ stays in Development.
+ * @param {string} url
+ * @returns {string|null} category label, or null if no pattern matched / malformed URL
+ */
+export function classifyByPath(url) {
+  let pathname, hostname;
+  try {
+    const parsed = new URL(url);
+    pathname = parsed.pathname.toLowerCase();
+    hostname = parsed.hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+
+  // Subdomain hints (raw hostname, NOT www-stripped — per D-02)
+  if (hostname.startsWith('docs.') || hostname.startsWith('documentation.')) return 'Reference';
+  if (hostname.startsWith('blog.')) return 'News';
+  if (hostname.startsWith('shop.') || hostname.startsWith('store.')) return 'Shopping';
+
+  // Path hints (per D-01)
+  if (pathname.startsWith('/docs/') || pathname === '/docs' || pathname.startsWith('/documentation/')) return 'Reference';
+  if (pathname.startsWith('/blog/') || pathname === '/blog' || pathname.startsWith('/news/') || pathname === '/news') return 'News';
+  if (pathname.startsWith('/shop/') || pathname === '/shop' || pathname.startsWith('/store/') || pathname === '/store') return 'Shopping';
+  if (pathname.startsWith('/api/') || pathname === '/api') return 'Development';
+
+  return null;
+}
+
 // ─── classifyNode ─────────────────────────────────────────────────────────────
 
 /**
  * Classify a single BookmarkNode link.
- * Chain: domain rules → OG metadata → 'Other'
+ * Chain: domain rules → OG metadata → path/subdomain signals → 'Other'
  * Returns a new node with .category set — does NOT mutate the input.
  * Folder nodes are returned unchanged.
  * @param {import('./shared/types.js').BookmarkNode} node
@@ -287,6 +519,7 @@ export function classifyNode(node) {
   const category =
     classifyByDomain(node.url) ??
     classifyByMetadata(node.metadata) ??
+    classifyByPath(node.url) ??
     'Other';
   return { ...node, category };
 }

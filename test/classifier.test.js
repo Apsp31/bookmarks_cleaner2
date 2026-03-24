@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {
   classifyByDomain,
   classifyByMetadata,
+  classifyByPath,
   classifyNode,
   classifyTree,
+  DOMAIN_RULES,
 } from '../src/classifier.js';
 
 // ─── classifyByDomain ─────────────────────────────────────────────────────────
@@ -187,5 +189,95 @@ describe('classifyTree', () => {
     classifyTree(tree);
     assert.equal(link.category, undefined);
     assert.equal(tree.children[0].category, undefined);
+  });
+});
+
+// ─── classifyByPath ───────────────────────────────────────────────────────────
+
+describe('classifyByPath', () => {
+  // Path patterns
+  it('returns News for /blog/ path', () => {
+    assert.equal(classifyByPath('https://example.com/blog/post-1'), 'News');
+  });
+
+  it('returns Reference for /docs/api path', () => {
+    assert.equal(classifyByPath('https://example.com/docs/api'), 'Reference');
+  });
+
+  it('returns Shopping for /shop/item path', () => {
+    assert.equal(classifyByPath('https://example.com/shop/item'), 'Shopping');
+  });
+
+  it('returns Development for /api/v1/users path', () => {
+    assert.equal(classifyByPath('https://example.com/api/v1/users'), 'Development');
+  });
+
+  it('returns News for /news/ path', () => {
+    assert.equal(classifyByPath('https://example.com/news/latest'), 'News');
+  });
+
+  it('returns Reference for /documentation/ path', () => {
+    assert.equal(classifyByPath('https://example.com/documentation/guide'), 'Reference');
+  });
+
+  it('returns Shopping for /store/ path', () => {
+    assert.equal(classifyByPath('https://example.com/store/products'), 'Shopping');
+  });
+
+  // Subdomain patterns
+  it('returns Reference for docs.example.com subdomain', () => {
+    assert.equal(classifyByPath('https://docs.example.com/guide'), 'Reference');
+  });
+
+  it('returns News for blog.example.com subdomain', () => {
+    assert.equal(classifyByPath('https://blog.example.com/post'), 'News');
+  });
+
+  it('returns Shopping for shop.example.com subdomain', () => {
+    assert.equal(classifyByPath('https://shop.example.com/item'), 'Shopping');
+  });
+
+  it('returns Shopping for store.example.com subdomain', () => {
+    assert.equal(classifyByPath('https://store.example.com/product'), 'Shopping');
+  });
+
+  it('returns Reference for documentation.example.com subdomain', () => {
+    assert.equal(classifyByPath('https://documentation.example.com/api'), 'Reference');
+  });
+
+  // Non-matching
+  it('returns null for /about path (no matching pattern)', () => {
+    assert.equal(classifyByPath('https://example.com/about'), null);
+  });
+
+  it('returns null for malformed URL', () => {
+    assert.equal(classifyByPath('invalid-url'), null);
+  });
+
+  it('returns null for empty string', () => {
+    assert.equal(classifyByPath(''), null);
+  });
+
+  // classifyNode chain: path fallback used when domain and metadata both fail
+  it('classifyNode uses path fallback when domain unknown and no metadata', () => {
+    const node = {
+      id: 'path-test',
+      type: 'link',
+      title: 'A blog post',
+      url: 'https://obscure-unknown-site-99999.com/blog/my-post',
+    };
+    const result = classifyNode(node);
+    assert.equal(result.category, 'News');
+  });
+});
+
+// ─── DOMAIN_RULES count ───────────────────────────────────────────────────────
+
+describe('DOMAIN_RULES', () => {
+  it('has at least 280 entries after expansion', () => {
+    assert.ok(
+      Object.keys(DOMAIN_RULES).length >= 280,
+      `Expected DOMAIN_RULES to have >= 280 entries, got ${Object.keys(DOMAIN_RULES).length}`
+    );
   });
 });
