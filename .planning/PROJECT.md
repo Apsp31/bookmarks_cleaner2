@@ -25,7 +25,7 @@ A single clean, importable bookmark file where every link works, nothing is dupl
 - ✓ Allow user to edit the proposed target structure before exporting (delete, keep, move) — v1.0
 - ✓ Empty folders absent from exported file — v1.0
 
-### Active (v1.1 candidates)
+### Active (v1.1)
 
 - [ ] Sub-categorisation: hierarchy should be 2-3 levels deep for large collections, not just one flat level
 - [ ] Classification quality: domain rules map covers common sites but misclassifies many — needs expansion or smarter fallback
@@ -79,5 +79,14 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current Milestone: v1.1 Quality & Navigation
+
+**Goal:** Upgrade classification depth and accuracy, and add drag-and-drop reordering to the review UI.
+
+**Target features:**
+- Sub-categorisation — 2-3 level hierarchy for large category folders
+- Classification quality — expanded domain rules and/or smarter fallback for personal collections
+- Drag-and-drop folder reordering in the before/after tree UI
+
 ---
-*Last updated: 2026-03-24 after v1.0 milestone*
+*Last updated: 2026-03-24 after v1.1 milestone start*
