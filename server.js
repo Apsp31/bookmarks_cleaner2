@@ -7,6 +7,7 @@ import cleanupRouter from './src/routes/cleanup.js';
 import mergeRouter from './src/routes/merge.js';
 import checkRouter from './src/routes/check.js';
 import classifyRouter from './src/routes/classify.js';
+import editRouter from './src/routes/edit.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -25,6 +26,7 @@ app.use('/api', cleanupRouter);
 app.use('/api', mergeRouter);
 app.use('/api', checkRouter);
 app.use('/api', classifyRouter);
+app.use('/api', editRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
