@@ -38,10 +38,10 @@
   3. A bookmark inside a folder whose name starts with `-` appears in its original folder in the classified output, not in a reclassified category
   4. A checkbox or button in the classify step UI lets the user opt in to reclassify hyphen-prefixed folder contents normally
   5. Expanding CATEGORY_KEYWORDS does not silently reclassify previously correct bookmarks (golden-file test covers the baseline)
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 Plans:
 - [x] 06-01-PLAN.md — Golden-file test, DOMAIN_RULES expansion, classifyByPath function
-- [ ] 06-02-PLAN.md — Hyphen-prefix folder preservation, classify route update, keyword tightening
+- [x] 06-02-PLAN.md — Hyphen-prefix folder preservation, classify route update, keyword tightening
 - [ ] 06-03-PLAN.md — Reclassify toggle UI and human verification
 
 ### Phase 7: Sub-Categorisation
@@ -78,6 +78,6 @@ Plans:
 | 3. Link Checker | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Classifier and Structure | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 5. Editable UI | v1.0 | 3/3 | Complete | 2026-03-24 |
-| 6. Classification Quality | v1.1 | 0/3 | Planned | - |
+| 6. Classification Quality | v1.1 | 2/3 | In Progress|  |
 | 7. Sub-Categorisation | v1.1 | 0/? | Not started | - |
 | 8. Drag-and-Drop | v1.1 | 0/? | Not started | - |
