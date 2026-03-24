@@ -377,7 +377,7 @@ export const CATEGORY_KEYWORDS = {
   // Specific categories first
   'Development': [
     'github', 'gitlab', 'npm', 'programming', 'open source', 'developer',
-    'api', 'code', 'library', 'framework', 'repository', 'pull request',
+    'api', 'library', 'framework', 'repository', 'pull request',
     'software engineer', 'devops', 'kubernetes', 'docker',
   ],
   'Video': [
@@ -393,29 +393,29 @@ export const CATEGORY_KEYWORDS = {
     'trading', 'portfolio', 'dividend', 'mortgage',
   ],
   'Shopping': [
-    'shop', 'buy', 'price', 'cart', 'checkout', 'product', 'store',
-    'deal', 'discount', 'sale', 'order',
+    'shop', 'buy', 'price', 'cart', 'checkout',
+    'deal', 'discount', 'sale',
   ],
   'Learning': [
     'course', 'tutorial', 'lesson', 'training', 'education', 'mooc',
     'learn ', 'lecture', 'bootcamp', 'certificate',
   ],
   'News': [
-    'news', 'article', 'breaking', 'report', 'headline', 'journalism',
-    'press', 'editorial', 'analysis',
+    'news', 'article', 'breaking', 'headline', 'journalism',
+    'press', 'editorial',
   ],
   'Social / Community': [
-    'forum', 'community', 'discussion', 'post', 'tweet', 'feed',
-    'thread', 'comment', 'network', 'social',
+    'forum', 'community', 'discussion', 'tweet',
+    'thread', 'comment', 'social',
   ],
   // More generic — checked after the above
   'Reference': [
     'wiki', 'reference', 'glossary', 'dictionary', 'specification',
-    'docs', 'documentation', 'manual', 'guide',
+    'docs', 'documentation', 'manual',
   ],
   'Tools': [
     'tool', 'generator', 'converter', 'calculator', 'editor', 'playground',
-    'utility', 'extension', 'plugin',
+    'utility',
   ],
 };
 

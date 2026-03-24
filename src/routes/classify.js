@@ -10,7 +10,10 @@ router.post('/classify', (req, res) => {
   if (!source) {
     return res.status(400).json({ error: 'No checked tree available. Run link check first.' });
   }
-  const classified = classifyTree(source);
+  const reclassifyFolders = new Set(
+    Array.isArray(req.body?.reclassifyFolders) ? req.body.reclassifyFolders : []
+  );
+  const classified = classifyTree(source, reclassifyFolders);
   const classifiedTree = buildHierarchy(classified);
   session.classifiedTree = classifiedTree;
   res.json({ classifiedTree });
