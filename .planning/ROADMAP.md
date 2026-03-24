@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Core Cleanup** - Deduplication and fuzzy folder merging — pure pipeline logic, no network calls (completed 2026-03-23)
 - [ ] **Phase 3: Link Checker** - Concurrent dead-link detection with real-time SSE progress stream
 - [x] **Phase 4: Classifier and Structure** - Category assignment and proposed 3-level hierarchy (completed 2026-03-23)
-- [ ] **Phase 5: Editable UI** - Before/after tree view, context menu editing, summary panel, and export
+- [x] **Phase 5: Editable UI** - Before/after tree view, context menu editing, summary panel, and export (completed 2026-03-24)
 
 ## Phase Details
 
@@ -90,11 +90,11 @@ Plans:
   3. User sees a summary panel showing: dead links removed, duplicates removed, folders merged, and total bookmarks remaining
   4. Empty folders are absent from the exported file after all operations have run
   5. User can click Export and receive the final cleaned Netscape HTML file ready to import into Chrome
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 05-01-PLAN.md — TDD: tree utilities (pruneEmptyFolders, countLinks) and tree operations (deleteNode, moveNode, markKeep)
 - [x] 05-02-PLAN.md — Edit route, export pruning integration, server mount
-- [ ] 05-03-PLAN.md — Two-column layout, context menu, summary panel, human verification
+- [x] 05-03-PLAN.md — Two-column layout, context menu, summary panel, human verification
 **UI hint**: yes
 
 ## Progress
@@ -108,4 +108,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Core Cleanup | 3/3 | Complete   | 2026-03-23 |
 | 3. Link Checker | 1/2 | In Progress|  |
 | 4. Classifier and Structure | 2/2 | Complete    | 2026-03-23 |
-| 5. Editable UI | 2/3 | In Progress|  |
+| 5. Editable UI | 3/3 | Complete   | 2026-03-24 |

@@ -41,9 +41,9 @@
 
 ### User Interface
 
-- [ ] **UI-01**: User sees a before/after tree view: original structure on the left, cleaned/proposed structure on the right
+- [x] **UI-01**: User sees a before/after tree view: original structure on the left, cleaned/proposed structure on the right
 - [x] **UI-02**: User can right-click any bookmark or folder in the proposed tree to: move to a different folder, mark as keep, or delete
-- [ ] **UI-03**: User sees a summary panel after processing: dead links removed, duplicates removed, folders merged, total bookmarks remaining
+- [x] **UI-03**: User sees a summary panel after processing: dead links removed, duplicates removed, folders merged, total bookmarks remaining
 
 ---
 
@@ -100,9 +100,9 @@
 | CLASS-03 | Phase 5 | Complete |
 | STRUCT-01 | Phase 4 | Complete |
 | STRUCT-02 | Phase 4 | Complete |
-| UI-01 | Phase 5 | Pending |
+| UI-01 | Phase 5 | Complete |
 | UI-02 | Phase 5 | Complete |
-| UI-03 | Phase 5 | Pending |
+| UI-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 20 total
