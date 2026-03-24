@@ -271,6 +271,91 @@ describe('classifyByPath', () => {
   });
 });
 
+// ─── classifyTree — hyphen-prefix preservation ────────────────────────────────
+
+describe('classifyTree — hyphen-prefix preservation', () => {
+  // Fixture: one hyphen-prefixed folder, one regular folder
+  const preservedTree = {
+    type: 'folder',
+    title: 'root',
+    children: [
+      {
+        type: 'folder',
+        title: '-Pinned',
+        children: [
+          { type: 'link', title: 'My Link', url: 'https://unknown-domain-xyz.com/page' },
+        ],
+      },
+      {
+        type: 'folder',
+        title: 'Regular',
+        children: [
+          { type: 'link', title: 'GitHub', url: 'https://github.com/foo' },
+        ],
+      },
+    ],
+  };
+
+  it('link inside hyphen-prefix folder gets folder name as category', () => {
+    const result = classifyTree(preservedTree);
+    assert.equal(result.children[0].children[0].category, '-Pinned');
+  });
+
+  it('link inside regular folder is classified normally by classifyNode', () => {
+    const result = classifyTree(preservedTree);
+    assert.equal(result.children[1].children[0].category, 'Development');
+  });
+
+  it('link inside hyphen-prefix folder with preservedFolders opt-in is classified normally', () => {
+    const result = classifyTree(preservedTree, new Set(['-Pinned']));
+    assert.notEqual(result.children[0].children[0].category, '-Pinned');
+  });
+
+  it('only direct children of hyphen-prefix folder are preserved (nested normal folder is not)', () => {
+    const nestedTree = {
+      type: 'folder',
+      title: 'root',
+      children: [
+        {
+          type: 'folder',
+          title: '-TopLevel',
+          children: [
+            {
+              type: 'folder',
+              title: 'NestedNormal',
+              children: [
+                { type: 'link', title: 'GitHub', url: 'https://github.com/foo' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    // The nested link's direct parent is 'NestedNormal' (not hyphen-prefixed),
+    // so it should be classified normally
+    const result = classifyTree(nestedTree);
+    assert.equal(result.children[0].children[0].children[0].category, 'Development');
+  });
+
+  it('classifyTree with no second argument still works (backward compat)', () => {
+    const tree = {
+      type: 'folder',
+      title: 'root',
+      children: [
+        { type: 'link', title: 'GitHub', url: 'https://github.com/foo' },
+      ],
+    };
+    const result = classifyTree(tree);
+    assert.equal(result.children[0].category, 'Development');
+  });
+
+  it('classifyTree returns a new tree (immutability preserved)', () => {
+    const result = classifyTree(preservedTree);
+    assert.notEqual(result, preservedTree);
+    assert.notEqual(result.children[0], preservedTree.children[0]);
+  });
+});
+
 // ─── DOMAIN_RULES count ───────────────────────────────────────────────────────
 
 describe('DOMAIN_RULES', () => {

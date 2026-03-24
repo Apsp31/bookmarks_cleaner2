@@ -529,13 +529,34 @@ export function classifyNode(node) {
 /**
  * Deep-walk a BookmarkNode tree, classifying all link nodes.
  * Returns a new tree — does NOT mutate the input.
+ *
+ * Hyphen-prefix preservation (D-05 through D-08):
+ *   If a link node's direct parent folder name starts with '-' AND that folder
+ *   is NOT in the preservedFolders opt-in set, the link's category is set to
+ *   the folder name (preserved as-is). If the folder IS in preservedFolders,
+ *   the link is classified normally via classifyNode.
+ *
  * @param {import('./shared/types.js').BookmarkNode} node
+ * @param {Set<string>} [preservedFolders] - folder names that should be reclassified normally
+ * @param {string|null} [_sourceFolderName] - internal: direct parent folder name (threaded through recursion)
  * @returns {import('./shared/types.js').BookmarkNode}
  */
-export function classifyTree(node) {
-  if (node.type === 'link') return classifyNode(node);
+export function classifyTree(node, preservedFolders = new Set(), _sourceFolderName = null) {
+  if (node.type === 'link') {
+    // If inside a hyphen-prefixed folder that is NOT opted in for reclassification, preserve it
+    if (_sourceFolderName !== null
+        && _sourceFolderName.startsWith('-')
+        && !preservedFolders.has(_sourceFolderName)) {
+      return { ...node, category: _sourceFolderName };
+    }
+    return classifyNode(node);
+  }
+  // Folder node: thread folder name to children (only direct parent — reset each level)
+  const folderName = node.title ?? null;
   return {
     ...node,
-    children: (node.children ?? []).map(classifyTree),
+    children: (node.children ?? []).map(child =>
+      classifyTree(child, preservedFolders, folderName)
+    ),
   };
 }
