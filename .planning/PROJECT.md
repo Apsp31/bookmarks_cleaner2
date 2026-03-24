@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A local web app that takes an exported Chrome bookmark HTML file and produces a clean, well-organised version. It checks every link for validity, deduplicates entries and folders, merges similar folder names, and re-classifies bookmarks into a sensible hierarchy — then presents a side-by-side before/after tree so the user can review and tweak before exporting.
+A local web app that takes an exported Chrome bookmark HTML file and produces a clean, well-organised version. It checks every link for validity, deduplicates entries and folders, merges similar folder names, and re-classifies bookmarks into a category hierarchy — then presents a side-by-side before/after tree so the user can review and tweak via context menu before exporting.
 
 ## Core Value
 
@@ -12,22 +12,24 @@ A single clean, importable bookmark file where every link works, nothing is dupl
 
 ### Validated
 
-- [x] Parse Chrome bookmark HTML export format — *Validated in Phase 1: Foundation*
-- [x] Export clean HTML bookmark file ready to import into Chrome — *Validated in Phase 1: Foundation*
-- [x] Run as a local Node.js server — no cloud dependency, no account required — *Validated in Phase 1: Foundation*
+- ✓ Parse Chrome bookmark HTML export format — v1.0
+- ✓ Export clean HTML bookmark file ready to import into Chrome — v1.0
+- ✓ Run as a local Node.js server — no cloud dependency, no account required — v1.0
+- ✓ Check every URL via HTTP and mark confirmed dead links (non-2xx, timeouts, connection refused) — v1.0
+- ✓ Detect and remove exact duplicate bookmarks (same URL after normalisation) — v1.0
+- ✓ Detect and merge folders with identical or fuzzy-similar names — v1.0
+- ✓ Detect and collapse fully duplicated folder subtrees — v1.0
+- ✓ Classify bookmarks into a sensible category using domain rules map → page metadata — v1.0
+- ✓ Propose a target folder hierarchy derived from the bookmark collection — v1.0 (single-level only — see Known Issues)
+- ✓ Present before/after tree UI: original structure on left, cleaned structure on right — v1.0
+- ✓ Allow user to edit the proposed target structure before exporting (delete, keep, move) — v1.0
+- ✓ Empty folders absent from exported file — v1.0
 
-### Active
+### Active (v1.1 candidates)
 
-- [ ] Check every URL via HTTP and remove dead links (non-2xx, timeouts, connection refused)
-- [ ] Detect and remove exact duplicate bookmarks (same URL regardless of title/location)
-- [ ] Detect and merge folders with identical or fuzzy-similar names (e.g. "Dev Tools" + "Developer Tools")
-- [ ] Detect and collapse fully duplicated folder trees
-- [x] Classify bookmarks into a sensible category using: domain rules map → page metadata (fetched during link check) → free classification API fallback — *Validated in Phase 4: Classifier and Structure*
-- [x] Propose a target folder hierarchy derived from the bookmark collection (not too deep, not too wide) — *Validated in Phase 4: Classifier and Structure*
-- [ ] Present before/after tree UI: original structure on left, cleaned structure on right
-- [ ] Allow user to edit the proposed target structure before exporting (drag, rename, merge folders)
-- [ ] Export clean HTML bookmark file ready to import into Chrome
-- [ ] Run as a local Node.js server — no cloud dependency, no account required
+- [ ] Sub-categorisation: hierarchy should be 2-3 levels deep for large collections, not just one flat level
+- [ ] Classification quality: domain rules map covers common sites but misclassifies many — needs expansion or smarter fallback
+- [ ] Drag-and-drop folder reordering in the review UI
 
 ### Out of Scope
 
@@ -35,14 +37,17 @@ A single clean, importable bookmark file where every link works, nothing is dupl
 - Browser extension — file-based workflow is simpler and more portable
 - Firefox/Safari bookmark formats — Chrome export only for v1
 - Real-time sync — one-shot import/clean/export workflow
+- Free text classification API (uClassify) — uncertain longevity; domain rules + OG metadata cover the majority
 
 ## Context
 
-- Chrome exports bookmarks as a Netscape Bookmark Format HTML file (NETSCAPE-Bookmark-file-1)
-- Dead link checking requires a Node.js backend to avoid CORS — the same fetch also provides page metadata for classification
-- Classification strategy (layered): (1) built-in domain→category map for well-known sites, (2) Open Graph / meta description from the page fetch, (3) free text classification API (e.g. uClassify) for unknowns
-- User has a large, messy bookmark file with duplicated branches, duplicated trees, scattered similar-named folders, and many dead links
-- Tool should be shareable — keep setup simple (clone + npm start)
+**v1.0 shipped 2026-03-24** — 5 phases, 13 plans, 4,366 LOC JavaScript.
+
+Tech stack: Node.js 20+ / Express 5, Alpine.js (CDN), cheerio, p-limit, fastest-levenshtein.
+
+**Known Issues (from v1.0 release):**
+- Classification is single-level only — `buildHierarchy` deferred sub-categorisation in v1 (per D-04). Large categories (e.g. "Development") can contain hundreds of bookmarks with no sub-folders.
+- Taxonomy coarseness — the 143-entry domain rules map produces broad categories that don't always match how a user mentally organises their bookmarks.
 
 ## Constraints
 
@@ -55,21 +60,18 @@ A single clean, importable bookmark file where every link works, nothing is dupl
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Local web app over CLI | Need visual before/after review UI; dead link checking needs server anyway | — Pending |
-| Layered classification (domain rules → metadata → API) | No API key required for 80-90% of bookmarks; API fills gaps for unknowns | — Pending |
-| Before/after tree UI | User wants to see what changed and be able to adjust before committing | — Pending |
-| Tool proposes structure, user edits | User wants sensible defaults but final control over hierarchy | — Pending |
+| Local web app over CLI | Need visual before/after review UI; dead link checking needs server anyway | ✓ Good — setup is simple, UI works well |
+| Layered classification (domain rules → metadata → API) | No API key required for 80-90% of bookmarks; API fills gaps for unknowns | ⚠ Revisit — domain rules cover common sites but coarse for personal collections |
+| Before/after tree UI side-by-side | User wants to see what changed and be able to adjust before committing | ✓ Good — two-column layout works cleanly |
+| Tool proposes structure, user edits via context menu | Sensible defaults + final control; drag-and-drop deferred for simplicity | ✓ Good — right-click menu sufficient for v1 |
+| v1 buildHierarchy single-level only | Avoids taxonomy explosion; deferred sub-categorisation | ⚠ Revisit — large categories are unwieldy without sub-folders |
+| HEAD-first link checker, GET fallback on 405 | Minimises bandwidth; 401/403=ok, 429=uncertain | ✓ Good — semantics correct and well-tested |
+| structuredClone before session mutation | Immutable-stage pattern prevents partial updates | ✓ Good — clean and safe |
+| router-per-file pattern (classify.js, edit.js, etc.) | Consistent Express routing, easy to extend | ✓ Good |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd:complete-milestone`):
 1. Full review of all sections
@@ -78,4 +80,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — Phase 4 complete: classifier.js (143-entry domain rules + OG metadata fallback), hierarchyBuilder.js (max 3-level hierarchy), POST /api/classify route, frontend "Classify Bookmarks" button*
+*Last updated: 2026-03-24 after v1.0 milestone*
