@@ -117,3 +117,11 @@ None - no external service configuration required.
 ---
 *Phase: 03-link-checker*
 *Completed: 2026-03-23*
+
+## Self-Check: PASSED
+
+- src/linkChecker.js — FOUND
+- test/linkChecker.test.js — FOUND
+- .planning/phases/03-link-checker/03-01-SUMMARY.md — FOUND
+- commit 928f685 (RED: failing tests) — FOUND
+- commit 21c25c8 (GREEN: implementation) — FOUND
