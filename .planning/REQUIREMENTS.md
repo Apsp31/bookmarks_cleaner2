@@ -32,7 +32,7 @@
 
 - [x] **CLASS-01**: App classifies each bookmark using a built-in domain→category rules map (github.com→Development, youtube.com→Video, reddit.com→Community, etc.)
 - [x] **CLASS-02**: App extracts Open Graph tags and meta description from pages already fetched during link checking to classify domains not in the rules map
-- [ ] **CLASS-03**: App removes empty folders from the output after all other operations
+- [x] **CLASS-03**: App removes empty folders from the output after all other operations
 
 ### Structure
 
@@ -42,7 +42,7 @@
 ### User Interface
 
 - [ ] **UI-01**: User sees a before/after tree view: original structure on the left, cleaned/proposed structure on the right
-- [ ] **UI-02**: User can right-click any bookmark or folder in the proposed tree to: move to a different folder, mark as keep, or delete
+- [x] **UI-02**: User can right-click any bookmark or folder in the proposed tree to: move to a different folder, mark as keep, or delete
 - [ ] **UI-03**: User sees a summary panel after processing: dead links removed, duplicates removed, folders merged, total bookmarks remaining
 
 ---
@@ -97,11 +97,11 @@
 | DEDUP-04 | Phase 2 | Complete |
 | CLASS-01 | Phase 4 | Complete |
 | CLASS-02 | Phase 4 | Complete |
-| CLASS-03 | Phase 5 | Pending |
+| CLASS-03 | Phase 5 | Complete |
 | STRUCT-01 | Phase 4 | Complete |
 | STRUCT-02 | Phase 4 | Complete |
 | UI-01 | Phase 5 | Pending |
-| UI-02 | Phase 5 | Pending |
+| UI-02 | Phase 5 | Complete |
 | UI-03 | Phase 5 | Pending |
 
 **Coverage:**

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 5 context gathered (assumptions mode)
-last_updated: "2026-03-24T00:06:13.860Z"
+status: Ready to execute
+stopped_at: Completed 05-editable-ui-01-PLAN.md
+last_updated: "2026-03-24T18:33:29.983Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 13
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 04 — classifier-and-structure
+**Current focus:** Phase 05 — editable-ui
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (editable-ui) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Plan: Not started
 | Phase 03-link-checker P02 | 35 | 3 tasks | 6 files |
 | Phase 04-classifier-and-structure P01 | 159s | 2 tasks | 4 files |
 | Phase 04-classifier-and-structure P02 | 113s | 2 tasks | 6 files |
+| Phase 05-editable-ui P01 | 118s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 04-classifier-and-structure]: byCategory Map drives folder creation so empty categories are never emitted (D-04)
 - [Phase 04-classifier-and-structure]: Upload route resets all downstream session fields (cleanTree, checkedTree, mergeCandidates, duplicateSubtrees, classifiedTree) to prevent stale data from previous file
 - [Phase 04-classifier-and-structure]: classifiedTree has highest priority in export chain (classifiedTree ?? checkedTree ?? cleanTree ?? tree)
+- [Phase 05-editable-ui]: treeOps: moveNode two-pass strategy (extract then insert) avoids parent pointer complexity; isDescendant guards circular moves
+- [Phase 05-editable-ui]: pruneEmptyFolders preserves root node unconditionally — root is the return value, never filtered by a parent
 
 ### Pending Todos
 
@@ -105,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T00:06:13.856Z
-Stopped at: Phase 5 context gathered (assumptions mode)
-Resume file: .planning/phases/05-editable-ui/05-CONTEXT.md
+Last session: 2026-03-24T18:33:29.979Z
+Stopped at: Completed 05-editable-ui-01-PLAN.md
+Resume file: None

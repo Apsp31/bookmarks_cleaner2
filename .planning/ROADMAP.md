@@ -90,9 +90,9 @@ Plans:
   3. User sees a summary panel showing: dead links removed, duplicates removed, folders merged, and total bookmarks remaining
   4. Empty folders are absent from the exported file after all operations have run
   5. User can click Export and receive the final cleaned Netscape HTML file ready to import into Chrome
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 05-01-PLAN.md — TDD: tree utilities (pruneEmptyFolders, countLinks) and tree operations (deleteNode, moveNode, markKeep)
+- [x] 05-01-PLAN.md — TDD: tree utilities (pruneEmptyFolders, countLinks) and tree operations (deleteNode, moveNode, markKeep)
 - [ ] 05-02-PLAN.md — Edit route, export pruning integration, server mount
 - [ ] 05-03-PLAN.md — Two-column layout, context menu, summary panel, human verification
 **UI hint**: yes
@@ -108,4 +108,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Core Cleanup | 3/3 | Complete   | 2026-03-23 |
 | 3. Link Checker | 1/2 | In Progress|  |
 | 4. Classifier and Structure | 2/2 | Complete    | 2026-03-23 |
-| 5. Editable UI | 0/3 | Planning complete | - |
+| 5. Editable UI | 1/3 | In Progress|  |
