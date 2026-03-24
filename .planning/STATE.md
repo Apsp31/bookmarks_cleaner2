@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 05-editable-ui-01-PLAN.md
-last_updated: "2026-03-24T18:33:29.983Z"
+stopped_at: Completed 05-editable-ui-02-PLAN.md
+last_updated: "2026-03-24T18:36:46.578Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 ## Current Position
 
 Phase: 05 (editable-ui) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 2 of 3
 | Phase 04-classifier-and-structure P01 | 159s | 2 tasks | 4 files |
 | Phase 04-classifier-and-structure P02 | 113s | 2 tasks | 6 files |
 | Phase 05-editable-ui P01 | 118s | 2 tasks | 3 files |
+| Phase 05-editable-ui P02 | 67s | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 04-classifier-and-structure]: classifiedTree has highest priority in export chain (classifiedTree ?? checkedTree ?? cleanTree ?? tree)
 - [Phase 05-editable-ui]: treeOps: moveNode two-pass strategy (extract then insert) avoids parent pointer complexity; isDescendant guards circular moves
 - [Phase 05-editable-ui]: pruneEmptyFolders preserves root node unconditionally — root is the return value, never filtered by a parent
+- [Phase 05-editable-ui]: structuredClone used in edit route so treeOps pure functions always receive a new copy (session mutation is deliberate, input mutation is not)
+- [Phase 05-editable-ui]: pruneEmptyFolders applied at export time (not at edit time) — defer cleanup to output boundary per CLASS-03 plan
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T18:33:29.979Z
-Stopped at: Completed 05-editable-ui-01-PLAN.md
+Last session: 2026-03-24T18:36:46.574Z
+Stopped at: Completed 05-editable-ui-02-PLAN.md
 Resume file: None
