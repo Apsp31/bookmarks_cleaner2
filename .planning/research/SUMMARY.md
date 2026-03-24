@@ -1,210 +1,176 @@
 # Project Research Summary
 
-**Project:** Chrome Bookmark Cleaner
+**Project:** Bookmark Cleaner v1.1 — Quality & Navigation
 **Domain:** Local Node.js utility app — bookmark file processor with browser review UI
-**Researched:** 2026-03-23
+**Researched:** 2026-03-24
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This is a local, single-user web application that implements a file-in / file-out workflow: the user uploads a Chrome bookmark HTML export, the server runs a sequential processing pipeline (parse → deduplicate → check links → classify → propose structure), and the user reviews and edits the proposed hierarchy in a browser UI before downloading the cleaned file. The recommended approach is Node.js + Express 5 on the server with Alpine.js on the client (loaded via CDN — no build step required). The pipeline is the core complexity; the UI is a reader/editor of its output. Every architectural and feature decision flows from one constraint: **the pipeline must run correctly before the UI has anything useful to show**.
+Bookmark Cleaner v1.1 is a focused quality-and-navigation milestone building on a fully shipped v1.0. The three features — classification quality improvement, sub-categorisation (2–3 level hierarchy), and drag-and-drop folder reordering — are all additive to an existing, well-understood codebase. No new npm packages are required for the recommended approach: SortableJS is available via CDN if needed, but native HTML5 Drag and Drop API is preferred because `renderTree()` uses imperative DOM construction rather than Alpine `x-for` lists. Classification improvements are pure data/logic additions to `src/classifier.js`. Architecture research confirms that all three features integrate with minimal blast radius: only four files change (`src/classifier.js`, `src/hierarchyBuilder.js`, `public/app.js`, and optionally a new `src/taxonomy.js`).
 
-The critical implementation insight from combined research is that the pipeline stages have a strict dependency order — parsing gates everything, deduplication must precede classification, and classification must precede restructuring. Within the link-checking stage, two design decisions must be made before writing a single line: concurrency control (global ceiling + per-domain ceiling) and the status interpretation model (403/429 are not dead; soft-404s are not alive). Getting either wrong after the fact is expensive to correct. The domain rules map for classification (Layer 1) must also be designed against a fixed taxonomy upfront — a free-form classifier produces taxonomy explosion that cannot be easily corrected post-implementation.
+The recommended build order is: classification quality first (additive, zero structural risk), then sub-categorisation (structural change to hierarchy output that benefits from better classifications), then drag-and-drop (UI-only, fully independent of the other two). This sequencing ensures sub-category groupings are as accurate as possible before the hierarchy is designed around them, and keeps the riskiest structural change (multi-level hierarchy) isolated to a single phase where it can be fully validated before UI work begins.
 
-The product's key differentiators over existing tools are: (1) fuzzy folder name merging with user review, (2) a proposed new hierarchy rather than just cleaning the existing one, and (3) a fully editable before/after tree UI with drag-and-drop before export. These are high-complexity features that depend on the entire pipeline completing correctly. They should not be built until the core pipeline loop is validated end-to-end with a real bookmark file.
+The critical risks are concentrated in the sub-categorisation phase: random UUIDs in `buildHierarchy` will silently break all edit operations after a rebuild — the fix is deterministic ID generation from title path before any edit wiring is connected. Naive sub-categorisation can also violate the 3-level depth constraint without an explicit guard. A secondary risk in the drag-and-drop phase is event interference between the new DnD listeners and the existing context menu. All risks are well-understood with clear prevention strategies documented in PITFALLS.md — they are not reasons to change the approach, only reasons to write the specified tests before closing each phase.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is deliberately minimal. Express 5.2.1 (released stable October 2024) handles routing with built-in async/await error propagation. Alpine.js 3.x via CDN provides frontend reactivity with no build step — the "clone + npm start" portability constraint eliminates React, Vue, Svelte, and any tool requiring `npm run build`. For parsing the Netscape Bookmark Format, `cheerio@1.2.0` is the correct choice; dedicated bookmark parser npm packages (`bookmarks-parser`, `node-bookmarks-parser`) are unmaintained. Concurrency control for link checking uses `p-limit@7.3.0` (ESM-only, requires Node >=20 and `"type": "module"` in package.json). Folder name similarity uses `fastest-levenshtein@1.0.16` — it is a CJS package requiring a minor interop step in an ESM project. No classification API is required at launch; the domain rules map handles 40–60% of typical collections at zero cost and with zero latency.
+The v1.0 stack (Node.js 20+, Express 5.2.1, Alpine.js 3.x CDN, cheerio 1.2.0, p-limit 7.3.0, fastest-levenshtein 1.0.16, ESM) is unchanged and carries forward entirely. See CLAUDE.md for the full baseline.
 
-**Core technologies:**
-- Node.js >=20 LTS: runtime — required for stable fetch, `AbortSignal.timeout()`, and p-limit v7
-- Express 5.2.1: HTTP server — async/await error propagation, no boilerplate vs raw http
-- cheerio 1.2.0: Netscape Bookmark HTML parsing and OG/meta extraction from fetched pages
-- p-limit 7.3.0: concurrency control for link checker — canonical solution, ESM-only
-- fastest-levenshtein 1.0.16: folder name similarity scoring for fuzzy merge detection
-- Alpine.js 3.x (CDN): frontend reactivity — zero build step, sufficient for tree panels and progress UI
-- Node.js built-in fetch: HTTP client for link checking — stable since Node 18, no extra dependency
+For v1.1, no new npm packages are needed. SortableJS 1.15.7 is available via CDN as an option for drag-and-drop, but research recommends the native HTML5 Drag and Drop API because `renderTree()` uses imperative DOM construction rather than Alpine `x-for` lists — SortableJS integration would require restructuring the renderer. The `@alpinejs/sort` plugin is explicitly ruled out due to a known `x-for` + nested list DOM sync bug (Alpine discussion #4157). Classification improvements are code-only — no NLP library (`natural`, `wink-nlp`, `compromise`) is justified; the rules-based classifier already covers 80–90% of common domains and the gap is coverage, not algorithmic quality.
 
-**What not to use:** `bookmarks-parser` (unmaintained), `node-bookmarks-parser` (dormant), `node-fetch` (superseded by built-in fetch), jQuery/jsTree, React/Vue/Svelte (require build step), uClassify URL API (deprecated), Klazify (100 free req/day — too restrictive for bulk checking).
+**Core v1.1 additions (no npm install required):**
+- Native HTML5 Drag API — folder reordering — zero-dependency, integrates with imperative DOM tree via `options.onDrop` callback pattern
+- `SUBCATEGORY_TAXONOMY` constant — sub-categorisation — plain exported `const` in `hierarchyBuilder.js` or extracted to `src/taxonomy.js`; no library needed
+- Expanded `DOMAIN_RULES` (~300 entries target) — classification coverage — pure data addition, highest-confidence improvement path
+- `classifyByUrlPattern()` function — URL path and subdomain signals — additive third step in the existing classification chain
 
 ### Expected Features
 
-The product competes in a sparse category. Most Chrome extension cleaners do exact-URL deduplication and basic dead-link checking with no configurability. No existing tool proposes a new hierarchy or provides an editable before/after tree. The research confirms the core differentiator is real and uncontested.
-
 **Must have (table stakes):**
-- Parse Chrome bookmark HTML export (Netscape Bookmark Format) — without this, nothing works
-- Dead link detection with pass/fail/uncertain status + real-time progress — primary user pain point
-- Exact URL deduplication with tracking-param normalization — second primary pain point
-- Auto-backup of original file on load — required for user trust
-- Empty folder cleanup — always expected
-- Before/after tree view — required for user confidence in the tool
-- Export clean HTML file (Chrome-importable Netscape format) — final deliverable
+- Sub-folders for large categories (threshold: > 20 links) — a flat 200-item "Development" folder is unusable for navigation
+- Max 3-level depth enforced as a hard constraint — promised in v1.0; must hold with sub-categories (root → category → sub-category → link)
+- Empty sub-folders absent from export — same expectation as empty top-level folders; pruning logic must be extended to recursive depth
+- Drag handle on folder rows with visual feedback — without a visible grip icon, users cannot discover draggability
+- Visual drop indicator (insertion line) during drag — without clear drop feedback, users misplace items
 
-**Should have (competitive):**
-- Fuzzy folder name merging with user confirmation — differentiator; no existing tool does this
-- Classification Layer 1: domain rules map — covers ~50% of collections at zero cost
-- Proposed folder hierarchy (max 3 levels, max 15 top-level folders) — core value proposition
-- Drag-and-drop editing of proposed tree with undo — required for user control before export
-- Scan summary statistics — gives users confidence the tool did real work
-- Classification Layer 2: OG/meta extraction piggybacked on link-check fetch — nearly free
+**Should have (differentiators):**
+- Predefined sub-category taxonomy (not algorithmically derived) — consistent, recognisable names; TF-IDF clustering on 20–50 items produces unstable, unrecognisable labels
+- URL path hints and subdomain patterns in classifier — `docs.*`, `/blog/`, `/shop/` etc. as structural signals for long-tail domains; cheap string operations with no network cost
+- "Other" catch-all sub-folder within each category — prevents classification dead-ends; skipped if > 60% of links would fall into it (not enough coverage to be useful)
+- Threshold control to skip splitting small categories — no sub-folders for a 12-item "Design" folder; configurable constant, not user-facing
 
 **Defer (v2+):**
-- Firefox/Safari format support — parsing is isolated but scope increase is real
-- Classification Layer 3: free API fallback (uClassify text API) — add only if Layer 1+2 miss rate is high
-- Duplicate folder tree detection (structural subtree comparison) — valuable but complex
-- Per-item right-click context menu — add when tree drag-and-drop proves too coarse
-- Configurable concurrency/timeout UI — CLI flag sufficient for v1
-- Bookmark age analysis (ADD_DATE-based) — interesting but not core
-
-**Anti-features to avoid:** auto-delete without user review, cloud sync, browser extension, LLM-powered classification, real-time link re-checking, tag system, automatic scheduling.
+- Drag bookmarks between folders — HIGH complexity; context menu "Move to" already covers this use case adequately without the state sync risk
+- Drag folder into another folder (nesting via drag) — high accidental-nesting error rate; depth constraint enforcement becomes hard to verify
+- Undo for drag operations — requires full history stack; v2+ scope
+- NLP/ML classification (`natural`, `wink-nlp`) — requires training corpus; local rules + URL patterns cover 85–90% without dependencies
 
 ### Architecture Approach
 
-The system is a pipeline server with a browser review UI. The server owns the source of truth: an in-memory session store holds `originalTree` (immutable after parse) and `proposedTree` (the pipeline's output, editable by user commands). The browser renders both trees and sends `EditCommand` objects to the server; the client applies commands optimistically and maintains an undo stack. Progress from the long-running link-checker stage is streamed to the browser via Server-Sent Events (SSE) — not WebSockets, which are bidirectional and unnecessary here. The pipeline runs asynchronously after file upload; the server returns `202 Accepted` immediately and the client polls the SSE stream for the `done` event before fetching the result trees.
+All three v1.1 features integrate with the existing pipeline as additive changes to individual modules. The key insight from architecture research is that `renderTree()`, `moveNode()`, `pruneEmptyFolders()`, and the export serialiser are all already depth-agnostic — they recurse without depth limits — so the 3-level hierarchy change does not require updates downstream of `buildHierarchy`. The one exception is empty-folder pruning in the exporter, which was written for a 2-level tree and needs a recursive depth extension.
 
-**Major components:**
-1. **Parser** — Netscape Bookmark HTML → internal `BookmarkNode` tree (stable UUIDs assigned at parse time)
-2. **Deduplicator** — exact-URL deduplication with full normalization pipeline; pure function returning new tree
-3. **Folder Merger** — fuzzy folder name matching (Jaro-Winkler/Levenshtein, ~85% threshold); proposes merges for user confirmation
-4. **Link Checker** — concurrent HEAD/GET with p-limit (global ceiling: 10–20; per-domain ceiling: 1–2); streams progress via EventEmitter → SSE; collects OG/meta for classifier
-5. **Classifier** — layered: domain rules map → OG/meta from link-check fetch → optional API fallback; maps to fixed 15-category taxonomy
-6. **Restructurer** — builds proposed 3-level hierarchy from classification output; merges thin folders (<5 items)
-7. **Pipeline Controller** — orchestrates stages in sequence; emits SSE progress events; holds session state
-8. **Frontend Tree Panels** — left panel (original, read-only); right panel (proposed, drag-and-drop editable); diff annotations; undo/redo
-9. **Exporter** — serializes `proposedTree` back to valid Netscape Bookmark HTML
+The drag-and-drop integration reuses the existing `move` operation via `/api/edit` without any server-side changes. `moveNode` in `treeOps.js` already has a circular-move guard (`isDescendant` check) that handles folder-into-own-subtree drops. The only Alpine state change needed is a `dragNodeId` property and extraction of `_applyEdit()` as a shared helper called by both the existing context menu and the new DnD handler.
 
-**Key patterns:** Immutable pipeline stages (each returns a new tree, original always preserved); command-based client state (typed `EditCommand` discriminated union enables undo without a library); SSE for one-way progress (not WebSocket); `202 Accepted` + async pipeline (not synchronous upload-and-wait).
+**Major components and v1.1 changes:**
+1. `src/classifier.js` — expands DOMAIN_RULES to ~300 entries; tightens CATEGORY_KEYWORDS; adds `classifyByUrlPattern()` as third chain link; no signature changes to `classifyNode()`
+2. `src/hierarchyBuilder.js` — adds `SUBCATEGORY_THRESHOLD` constant, `SUBCATEGORY_TAXONOMY`, and `addSubFolders()` post-pass applied only to categories exceeding the threshold; folder IDs must become deterministic (hash-based, not `crypto.randomUUID()`)
+3. `public/app.js` — extracts `_applyEdit()` helper; adds `dragNodeId: null` state; adds `onDropFolder()` method; wires HTML5 DnD events inside `renderTree()` folder branch gated on `options.onDrop` being present
 
-**Shared data model:** A single `BookmarkNode` type defined in `shared/types.ts` is the canonical representation used by every server stage and the client. Never flatten to an array — folder structure is the core output.
+**Files that do NOT change:** `src/shared/treeOps.js`, `src/shared/treeUtils.js`, `src/shared/types.js`, `src/routes/classify.js`, `src/routes/edit.js`, `src/routes/export.js`, `src/session.js`, `server.js`.
 
 ### Critical Pitfalls
 
-1. **Soft 404s pass as alive** — Sites return HTTP 200 for deleted content. Probe each domain with a known-bad URL; check page title for "not found" signals; flag as "uncertain" if final redirect URL collapses to the domain root. Do not mark as alive based on status code alone.
+1. **Random UUIDs in buildHierarchy silently break edit operations** — if `buildHierarchy` is re-invoked after any edit, all folder IDs change and subsequent `editOp` calls no-op silently (server finds no matching node; returns tree unchanged; client shows no error). Prevention: derive folder IDs deterministically from title path, e.g. `crypto.createHash('sha1').update('Development/JavaScript').digest('hex').slice(0,8)`. Write a test that calls `buildHierarchy` twice on the same input and asserts all folder IDs are identical across both calls.
 
-2. **403/429 misinterpreted as dead links** — Anti-bot systems block automated requests. Treat 403 and 429 as "uncertain/blocked," not dead. Use browser-like User-Agent + Accept headers. Cap per-domain concurrency at 1–2. Respect `Retry-After` on 429. This architecture decision must be made before building the checker, not retrofitted.
+2. **Sub-categorisation depth can exceed the 3-level hard constraint** — naive recursion or a grouping function without a depth guard can produce root → category → sub-category → sub-sub-category → link (depth 4). Prevention: add a `MAX_DEPTH = 3` constant with an explicit depth parameter; flatten remaining items at the deepest allowable level. Write a test with input designed to trigger 4-level nesting and confirm it caps at 3.
 
-3. **URL deduplication misses variants** — String equality misses `http` vs `https`, `www` vs non-www, trailing slash, UTM params, fragment anchors. Build and unit-test a normalization function covering all 7 variant patterns before wiring it to the pipeline.
+3. **Keyword classifier over-fits without a golden-file regression test** — expanding `CATEGORY_KEYWORDS` causes silent regressions when keywords are added or when `Object.entries()` iteration order shifts (insertion order is load-bearing). Prevention: establish a golden-file test with known bookmark → category expectations before any keyword additions; add a comment in the source marking ordering as load-bearing.
 
-4. **Classification taxonomy explosion** — Without a fixed taxonomy, the classifier invents near-synonym category names and the proposed tree has 30–40 redundant folders. Define the fixed 15-category taxonomy before implementing the classifier. Pass it as a constraint to any API call. This is non-trivially expensive to fix post-implementation.
+4. **DnD events interfere with the existing context menu** — `dragstart`/`drop` fire on the same elements as `contextmenu`; right-click during a drag can open the context menu and trigger an unintended edit operation. Prevention: add `isDraggingNode: false` flag to Alpine state; return early from `openContextMenu` when dragging; call `contextMenu.visible = false` at `dragstart`; use `e.stopPropagation()` on child DnD handlers.
 
-5. **Chrome import rejects or mangles the output** — Wrong doctype, unescaped `&`/`<`/`>` in titles, non-Unix-timestamp `ADD_DATE`, mismatched `<DL>`/`<DT>` nesting. Validate with a round-trip parse test (export → parse → compare count) before shipping the exporter.
+5. **Empty sub-folders appear in Chrome after import** — user deletes all links from a sub-folder during review; existing empty-folder pruning only handles 2-level trees. Prevention: extend `pruneEmptyFolders` to recursively check nested folder children before serialisation; add a round-trip test asserting no empty `<DL>` blocks in output.
 
-6. **Bulk link checker overwhelms network / triggers IP ban** — Unconstrained `Promise.all()` over 1000 URLs exhausts file descriptors and triggers CDN-level rate limits. Implement two-level concurrency from the start: global (10–15) + per-domain (1–2) ceiling. This is 10 extra lines; skipping it is never acceptable.
-
-7. **Tree UI freezes at 1000+ bookmarks** — Naive full-DOM tree render with two panels causes browser freeze. Render trees collapsed by default. Use virtual scrolling for large expanded folders. Test with a real 1000-entry file during UI development.
+---
 
 ## Implications for Roadmap
 
-Based on combined research, the build order is dictated by hard dependencies. The pipeline must be complete and correct before the UI has anything to show. Each phase should be validated with a real bookmark file before proceeding.
+Based on research, suggested phase structure:
 
-### Phase 1: Foundation — Types, Parser, Exporter, Round-Trip Test
-**Rationale:** `shared/types.ts` is the single dependency of everything else. The parser and exporter must be validated together — if the round-trip fails (parse → export → re-parse → count mismatch), every downstream phase is building on broken ground. This is the shortest path to a confidence check.
-**Delivers:** A CLI that accepts a Chrome bookmark file and outputs a structurally identical clean file. Validates the file I/O contract.
-**Addresses:** "Parse Chrome bookmark HTML export" and "Export clean HTML file" (both table stakes).
-**Avoids:** Chrome import failure (Pitfall 6) — build and run the round-trip test here, not after the full UI is built.
-**Research flag:** Standard patterns — well-documented. Skip phase research.
+### Phase 1: Classification Quality
 
-### Phase 2: Core Cleanup Pipeline — Deduplication, Folder Merger, Session Store, Basic API
-**Rationale:** Deduplication and folder merging are pure functions with no external network calls. They can be built, tested, and validated against real data without any HTTP infrastructure. Wiring them to a basic API + in-memory session store produces the first end-to-end server flow.
-**Delivers:** Server accepts file upload, runs dedup + folder merge, serves result tree via GET /api/tree. No UI yet — validate via curl or a minimal upload form.
-**Addresses:** Exact URL deduplication (table stakes), fuzzy folder merge (differentiator), auto-backup on load.
-**Avoids:** URL normalization misses (Pitfall 4) — unit-test the normalization function in this phase against all 7 variant patterns.
-**Research flag:** Standard patterns. Skip phase research.
+**Rationale:** Purely additive changes to `src/classifier.js` — expanding DOMAIN_RULES, tightening CATEGORY_KEYWORDS, adding `classifyByUrlPattern()`. Zero structural risk; rollback is trivial. Better classifications produced here directly improve sub-category groupings in Phase 2. The golden-file regression test established here protects the classifier through all future changes.
 
-### Phase 3: Link Checker + SSE Progress
-**Rationale:** Link checking is the longest-running and most complex stage. It must be built and tuned before classification (which piggybacks on its fetched metadata). The SSE infrastructure required here is also needed for overall pipeline progress.
-**Delivers:** Concurrent link checker with HEAD/GET fallback, per-domain concurrency cap, 429/403 "uncertain" handling, soft-404 detection, redirect capture, real-time SSE progress stream to browser.
-**Addresses:** Dead link detection with progress indicator (highest-priority table stake).
-**Avoids:** Bot blocking misinterpreted as dead (Pitfall 2), bulk network overload (Pitfall 8), redirect chain not captured (Pitfall 3), soft-404s passing as alive (Pitfall 1). All four must be designed in, not added later.
-**Research flag:** Needs careful implementation review. The per-domain concurrency, soft-404 probe, and status interpretation model are all non-trivial. Consider a focused research-phase spike on the HTTP engine before building.
+**Delivers:** Reduced "Other" bucket in classification output; subdomain and URL path signals for long-tail sites; protected classifier against ordering-sensitive regressions.
 
-### Phase 4: Classifier + Restructurer + Proposed Tree Display
-**Rationale:** Classification depends on the link checker's OG/meta output. The restructurer depends on classification. Both must complete before the proposed tree has real content. The taxonomy must be finalized before writing a line of classifier code.
-**Delivers:** Domain rules map (Layer 1), keyword-based OG/meta classifier (Layer 2), fixed-taxonomy category assignment, proposed 3-level hierarchy with thin-folder merging, right-panel read-only display.
-**Addresses:** Classification Layer 1 (P1), proposed folder hierarchy (P1), scan summary statistics.
-**Avoids:** Classification taxonomy explosion (Pitfall 5) — define and lock the 15-category list before implementation begins.
-**Research flag:** Taxonomy design needs a deliberate design decision before coding. No additional research phase needed if taxonomy is agreed upfront.
+**Addresses:** Expanded domain rules coverage (P1), URL path hints and subdomain awareness (P1), expanded keyword precision (P2).
 
-### Phase 5: Editable UI — Drag-and-Drop, Undo, Diff, Export
-**Rationale:** The full review loop (edit → undo → export) can only be built once both tree panels have real data. This is the phase where the product becomes usable end-to-end.
-**Delivers:** Drag-and-drop tree editing with undo stack, diff highlight annotations between original and proposed tree, before/after side-by-side view, Export button downloads cleaned bookmark HTML, empty folder cleanup.
-**Addresses:** Drag-and-drop editing (P1), before/after tree UI (P1), export (P1), empty folder cleanup (table stakes).
-**Avoids:** Tree UI freeze at scale (Pitfall 9) — collapsed-by-default and virtual scroll must be implemented from the start, not bolted on. Test with a real 1000-entry file before calling this phase done.
-**Research flag:** `sortable-tree` (vanilla TypeScript drag-drop) is the identified library. Alpine.js handles the rest. Standard patterns apply. Skip phase research unless virtual scroll integration proves complex.
+**Avoids:** Pitfall 4 (keyword over-fitting) — golden-file test written before any keyword additions; Pitfall 5 (domain map vs keyword fallback conflicts) — test asserting domain rule wins over conflicting keyword for any affected URL.
+
+### Phase 2: Sub-Categorisation
+
+**Rationale:** Structural change to `buildHierarchy` output — the classified tree depth increases from 2 to up to 3 levels for large categories. Must come after Phase 1 so classification quality feeds correct top-level categories into the sub-category grouping logic. This is the highest-risk phase: deterministic IDs must be implemented before edit operations are wired, and the depth constraint must be enforced with an explicit guard, not assumed from the flat design.
+
+**Delivers:** Automatic sub-folders for large categories using predefined taxonomy; "Other" catch-all sub-folder; 3-level depth hard constraint enforced by `MAX_DEPTH` constant; empty sub-folder pruning in exporter extended to recursive depth.
+
+**Addresses:** Sub-folders for large categories (table stakes for large collections), predefined taxonomy, threshold control, "Other" catch-all, max depth constraint, empty sub-folders in export.
+
+**Avoids:** Pitfall 1 (random UUID IDs) — deterministic IDs implemented and tested before edit operations are wired; Pitfall 2 (depth > 3) — `MAX_DEPTH` constant and unit test; Pitfall 5 (empty sub-folders in export) — recursive pruning verified before phase closes; Pitfall 10 (inconsistent sub-category labels) — fixed controlled vocabulary from `SUBCATEGORY_TAXONOMY`, not free-form metadata output.
+
+### Phase 3: Drag-and-Drop Folder Reordering
+
+**Rationale:** UI-only change confined to `public/app.js`. Fully independent of Phases 1 and 2 — operates on whatever tree shape exists. Benefits from having a richer 3-level tree available during testing. No server-side changes needed: the existing `move` operation via `/api/edit` already handles folder moves at any depth.
+
+**Delivers:** Drag handles on folder rows in the right (proposed) panel; visual drop indicator (insertion line); reordering of folders within the same parent level; `_applyEdit()` helper shared by context menu and DnD (removes code duplication in `editOp`).
+
+**Addresses:** Drag handle with grip icon (table stakes), visual drop indicator (table stakes), folder reordering within same level (P1), dragged item visual state.
+
+**Avoids:** Pitfall 6 (DnD / context menu event interference) — `isDraggingNode` flag and early return in `openContextMenu`; Pitfall 7 (drop target ambiguity) — three drop zones per folder (top/middle/bottom strips) with `getBoundingClientRect()` and `data-drop-zone` attributes; Pitfall 8 (full re-render loses DnD listeners) — `isEditPending` flag disables drag handles during in-flight server calls.
 
 ### Phase Ordering Rationale
 
-- **Types before everything:** `BookmarkNode` and `EditCommand` are consumed by every module; defining them first prevents drift between server and client.
-- **Parser + Exporter together:** Round-trip validation in Phase 1 catches format bugs before any pipeline logic is layered on top.
-- **Pure pipeline stages before HTTP:** Deduplication and folder merging are side-effect-free functions; validate them cheaply before adding network complexity.
-- **Link checker before classifier:** The classifier's Layer 2 (OG/meta) reuses data the link checker already fetches; building them in order avoids redundant fetch infrastructure.
-- **Classifier/restructurer before editable UI:** The edit UI needs real proposed-tree data to be meaningful; building it against mock data produces UI that may not handle real data shapes.
-- **Pitfall-driven design gates:** Pitfalls 1, 2, 4, 5, and 9 each represent decisions that are expensive to retrofit. Phases 1–4 are structured so each pitfall is addressed in the phase where it first matters.
+- Classification quality before sub-categorisation: better top-level category assignments produce better sub-category groupings. Bookmarks that fall to the wrong top-level category are never reached by the sub-category taxonomy rules.
+- Sub-categorisation before drag-and-drop: higher-risk structural change should be validated end-to-end (including export round-trip) before UI work begins on top of it. Phase 3 also benefits from testing against a richer 3-level tree.
+- All three phases are otherwise independent — if sub-categorisation scope is cut, drag-and-drop can ship from a flat tree without changes.
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 3 (Link Checker):** The HTTP engine design has multiple interacting constraints (global concurrency, per-domain concurrency, soft-404 probe, 429 backoff, redirect chain capture). A focused spike — building and testing the checker against a real 100-URL sample — is recommended before committing to the full implementation. The pitfalls here are the hardest to retrofit.
+- **Phase 2 (Sub-Categorisation):** The `SUBCATEGORY_TAXONOMY` constant proposed in ARCHITECTURE.md covers Development, Learning, and Video. The 60% coverage threshold for skipping sub-foldering is a heuristic — expose as a named constant and tune against a real collection during phase execution. Domain entries within each sub-category will also need expansion against real bookmark samples.
+- **Phase 3 (Drag-and-Drop):** The three-drop-zone pattern (top/middle/bottom strips with `getBoundingClientRect()`) has not been prototyped against the specific DOM structure of `renderTree()`. The interaction between the folder expand/collapse click target and the drag handle element needs careful `e.stopPropagation()` design to avoid zone misfires.
 
 Phases with standard patterns (skip research-phase):
-- **Phase 1 (Foundation):** cheerio parsing and HTML generation are well-documented. Round-trip test pattern is straightforward.
-- **Phase 2 (Core Cleanup):** Deduplication and fuzzy matching are pure algorithmic functions. p-limit and fastest-levenshtein are stable libraries with clear APIs.
-- **Phase 4 (Classifier):** Well-documented layered approach; main risk is taxonomy design (a design decision, not a research question).
-- **Phase 5 (UI):** Alpine.js + sortable-tree are well-documented. Virtual scroll with TanStack Virtual is standard.
+- **Phase 1 (Classification Quality):** Expanding a DOMAIN_RULES map and adding URL pattern matching are well-understood, low-risk data additions. Golden-file test is the only guard needed — implement first, then expand.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Core packages verified against npm registry. Express 5.2.1, p-limit 7.3.0, cheerio 1.2.0 all confirmed current. ESM/CJS interop issue with fastest-levenshtein is documented with two clear solutions. |
-| Features | MEDIUM-HIGH | Competitor analysis is thorough. Feature boundaries are well-reasoned. Classification Layer 2 (OG/meta) quality depends on site quality — real-world coverage rate is an estimate (40–60%), not a measured figure. |
-| Architecture | HIGH | Patterns (SSE, immutable pipeline, command-based undo, 202+async) are well-established and verified against current documentation. `sortable-tree` library is identified but not deeply evaluated for edge cases. |
-| Pitfalls | HIGH | Link checking, deduplication, and export pitfalls are specific and actionable with sources. UI scale pitfall has concrete thresholds. Classification drift pitfall has a clear prevention strategy. |
+| Stack | HIGH | v1.0 stack carries forward unchanged; SortableJS vs native DnD recommendation is based on direct analysis of `renderTree()` implementation; `@alpinejs/sort` ruling is confirmed against a tracked Alpine issue (#4157) |
+| Features | MEDIUM-HIGH | Feature set derived from bookmark organiser UX patterns; sub-category threshold (20 links) is an estimate from cognitive load literature with no industry standard to cite; 60% coverage skip threshold is a heuristic |
+| Architecture | HIGH | Based on direct codebase inspection of all affected files with line numbers verified; integration risks are concrete; depth-agnostic claims for `treeOps` and `renderTree` verified against source |
+| Pitfalls | HIGH (integration pitfalls); MEDIUM (DnD UX patterns) | Integration pitfalls derived from direct source inspection with specific failure modes described; DnD zone patterns from MDN and design system documentation |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Classification Layer 2 real-world coverage:** Research estimates 40–60% domain-map coverage for typical bookmark collections, but this depends heavily on the user's bookmarking habits. The actual unclassified rate after Layer 1+2 won't be known until tested against real data. Plan to measure and add Layer 3 (API) if the unclassified rate exceeds ~20%.
-- **fastest-levenshtein CJS interop:** In an ESM project (`"type": "module"`), this package requires either a dynamic `import()` or switching to `leven` (ESM-native alternative). Confirm the approach works in practice during Phase 2 before depending on it.
-- **sortable-tree library depth:** The architecture recommends `sortable-tree` for drag-and-drop but it has not been deeply evaluated for behavior with large trees, synchronized scroll, or Alpine.js integration. Validate during Phase 5 setup; have vanilla fallback plan.
-- **Soft-404 probe reliability:** The technique of probing a known-bad URL at each domain works for many sites but may itself be blocked by WAFs. The probe adds one extra request per domain. Confirm the probe adds acceptable overhead before enabling it by default.
+- **Sub-category taxonomy completeness:** `SUBCATEGORY_TAXONOMY` covers Development, Learning, and Video. Design, News, Social/Community, Shopping, Finance, and Tools are noted as "rarely overflow the threshold" but have no taxonomy entries. If those categories do overflow, items fall to "Other" within the category — acceptable for v1.1 but worth measuring on a real collection during Phase 2.
+- **60% coverage skip threshold:** The rule "if > 60% of links in a category are unmatched by the sub-taxonomy, skip sub-foldering" is a heuristic, not a validated value. Should be exposed as a named constant (`SUBCATEGORY_MIN_COVERAGE_RATIO`) and reviewed after running Phase 2 against a real bookmark file.
+- **Three-zone drop implementation:** The drop zone geometry logic (top/middle/bottom strips with `getBoundingClientRect()`) is well-specified in PITFALLS.md but not prototyped. The existing folder header element contains multiple child elements (expand icon, title, badge, context menu trigger) — careful `e.stopPropagation()` handling is needed to prevent zone misfires from child element events bubbling up.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Express 5 stable release: https://expressjs.com/2024/10/15/v5-release.html
-- p-limit GitHub: https://github.com/sindresorhus/p-limit — v7.3.0, ESM-only, Node>=20
-- Alpine.js installation docs: https://alpinejs.dev/essentials/installation — CDN approach confirmed
-- cheerio npm registry: https://registry.npmjs.org/cheerio/latest — v1.2.0
-- Express npm registry: https://registry.npmjs.org/express/latest — v5.2.1
-- SSE vs WebSocket comparison (RxDB): https://rxdb.info/articles/websockets-sse-polling-webrtc-webtransport.html
-- SSE with Express.js: https://amd.codes/posts/real-time-updates-with-sse-and-express-js
-- Node.js fetch stability: https://blog.logrocket.com/fetch-api-node-js/
-- sortable-tree: https://github.com/marcantondahmen/sortable-tree
-- TanStack Virtual: https://tanstack.com/virtual/latest
-- Netscape Bookmark Format quirks: http://fileformats.archiveteam.org/wiki/Netscape_bookmarks
-- Shaarli >3000 entry performance issue: https://github.com/shaarli/Shaarli/issues/985
+- `src/classifier.js` — direct inspection; confirmed 143 DOMAIN_RULES entries, sequential chain, insertion-order dependency in CATEGORY_KEYWORDS (line refs in ARCHITECTURE.md)
+- `src/hierarchyBuilder.js` — direct inspection; confirmed single-level output, `crypto.randomUUID()` usage, D-08 deferral comment
+- `src/shared/treeOps.js` — direct inspection; confirmed depth-agnostic `moveNode`, `isDescendant` circular guard at line 61
+- `public/app.js` — direct inspection; confirmed `renderTree` options pattern; full `innerHTML` wipe on `editOp`; file-DnD `isDragging` flag exists (not reusable for node DnD)
+- `src/routes/edit.js` — direct inspection; confirmed silent no-op on node-not-found (returns tree unchanged with no error flag)
+- `src/exporter.js` — direct inspection; confirmed no empty-folder pruning in `serializeNode`; recursive but no depth guard
+- MDN HTML Drag and Drop API: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
+- SortableJS npm registry: https://registry.npmjs.org/sortablejs/latest — confirmed v1.15.7
+- @alpinejs/sort npm registry: https://registry.npmjs.org/@alpinejs/sort/latest — confirmed v3.15.8
 
 ### Secondary (MEDIUM confidence)
-- BrowserBookmarkChecker (GitHub) — fuzzy folder matching approach, RapidFuzz threshold 85
-- bookmarks-dedupe (GitHub) — URL canonicalization patterns
-- AM-DeadLink v7.1 — competitor dead link checker feature baseline
-- Cloudflare bot detection patterns: https://developers.cloudflare.com/waf/tools/user-agent-blocking/
-- check-links npm — concurrency and timeout reference defaults
-- broken-link-checker npm — per-host concurrency limiting pattern
-- URI normalization: https://en.wikipedia.org/wiki/URI_normalization
-- Raindrop.io default collections — bookmark taxonomy reference
-- Chrome Web Store listings: Bookmarks Clean Up, Bookmark Detox, KK Bookmark Checker
+- Alpine x-sort + x-for DOM sync issue: https://github.com/alpinejs/alpine/discussions/4157 — confirmed bug; resolved in PR #4361 but fragile for nested use
+- Bookmarkify best practices: https://www.bookmarkify.io/blog/best-way-to-organize-bookmarks-5ceba — 2–3 level depth recommendation, cognitive load limits
+- Cloudscape Design System drag-and-drop patterns: https://cloudscape.design/patterns/general/drag-and-drop/ — drag indicator icon, cursor patterns, drop preview zones
+- frontend-dev-bookmarks (dypsilon): https://github.com/dypsilon/frontend-dev-bookmarks — real-world developer bookmark taxonomy at scale
+- "Building Sortable Tree" (Marc Dahmen): https://dev.to/marcantondahmen/building-sortable-tree-a-lightweight-drag-drop-tree-in-vanilla-typescript-f7l — callback pattern for vanilla DnD trees
 
-### Tertiary (LOW confidence — validate during implementation)
-- uClassify text API (free tier, 500 calls/day) — classification Layer 3 fallback; longevity uncertain
-- Classification Layer 2 coverage estimate (40–60%) — based on general bookmark collection patterns, not measured data
-- Soft-404 probe technique: https://github.com/benhoyt/soft404 — principle validated; WAF interaction with probe requests is not characterized
+### Tertiary (LOW confidence — validate during execution)
+- Sub-category threshold (20 links) — derived from cognitive load literature and bookmark UX guides; no industry standard; treat as a tunable constant
+- 60% coverage skip threshold — heuristic only; validate against real collections during Phase 2 execution
 
 ---
-*Research completed: 2026-03-23*
+*Research completed: 2026-03-24*
 *Ready for roadmap: yes*

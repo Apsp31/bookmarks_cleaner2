@@ -1,317 +1,404 @@
-# Feature Research
+# Feature Research — v1.1 Quality & Navigation
 
 **Domain:** Chrome bookmark cleaner / organizer (local web app, file-in / file-out workflow)
-**Researched:** 2026-03-23
-**Confidence:** MEDIUM-HIGH (ecosystem well-surveyed; specific implementation tradeoffs from multiple sources)
+**Researched:** 2026-03-24
+**Milestone:** v1.1 (subsequent to v1.0 shipped 2026-03-24)
+**Confidence:** MEDIUM-HIGH
+
+> This document covers the three NEW features for v1.1. v1.0 features (parse, export, dedup, fuzzy
+> merge, link checker, keyword classifier, single-level hierarchy, two-column review UI with context
+> menu) are fully built and NOT re-researched here.
 
 ---
 
-## Feature Landscape
+## Feature 1: Sub-Categorisation (2–3 Level Hierarchy)
 
-### Table Stakes (Users Expect These)
+### What Users Expect
 
-Features users assume exist. Missing these = product feels incomplete or untrustworthy.
+A "Development" folder containing 300 bookmarks is unusable. Users with large collections expect
+the tool to produce sub-folders automatically — they've seen this in file managers, bookmarking
+services (Raindrop.io, Notion), and browser bookmark bars that they've manually maintained over
+years. A flat 1-level category is table stakes for small collections; for large ones it feels broken.
+
+### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Parse Chrome bookmark HTML export | Entry point — without this, nothing works | LOW | Netscape Bookmark Format (NETSCAPE-Bookmark-file-1) with DL/DT/H3/A structure; `ADD_DATE` in Unix timestamps; npm packages `bookmarks-parser` and `netscape-bookmarks` exist |
-| Dead link detection with clear pass/fail status | Users' primary pain: "is this still alive?" | HIGH | HEAD-first (fallback to GET for sites that reject HEAD); 5–10s timeout; 5–10 concurrent workers as default; respect `Retry-After` on 429; exponential backoff; treat connection refused + timeout + non-2xx as dead |
-| Exact URL deduplication | Users know they have dupes; tool must find all of them | LOW | Normalize URL before comparison: lowercase host, strip default ports (:80/:443), remove UTM/tracking params (utm_*, fbclid, gclid), sort query params, strip trailing slash consistently |
-| Export clean HTML file importable into Chrome | Final deliverable — without this, no value is delivered | LOW | Must produce valid Netscape Bookmark Format; Chrome is strict about structure |
-| Progress indicator during link checking | Checking 1,000+ links takes minutes; blind wait is unacceptable | LOW | Show checked/total count + current URL being checked + estimated time remaining |
-| Before/after view of what changed | Users need to know what was removed so they can trust the tool | MEDIUM | Side-by-side tree or summary diff showing: dead links removed, dupes removed, folders merged, items reclassified |
-| Safety backup before any destructive action | Users have lost bookmarks to cleaner tools; trust requires safety net | LOW | Auto-export the original file on load; show "your original is saved at X" before any clean operation |
-| Empty folder cleanup | Empty folders are clutter; users expect this to be handled | LOW | After all other operations, remove folders with zero children |
+| Sub-folders for large categories | Category with >20–30 items is browsable but unwieldy; >50 is overwhelming | MEDIUM | Threshold is the key decision (see below) |
+| Max depth respected (3 levels) | v1.0 already promised this; users expect the promise to hold with sub-categories | LOW | root(0) → category(1) → sub-category(2) → link(3) — no deeper |
+| Empty sub-folders absent from export | Same expectation as empty top-level folders | LOW | Already handled by existing empty-folder cleanup logic |
 
-### Differentiators (Competitive Advantage)
-
-Features that set the product apart. Not required, but valuable — and aligned with this tool's core value proposition.
+### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Fuzzy folder merge (similar names) | Most tools only do exact-name deduplication; "Dev Tools" + "Developer Tools" + "Development" are obviously the same | MEDIUM | Levenshtein or Jaro-Winkler distance on folder names; configurable threshold (default ~85% similarity); show user the proposed merges before applying; never auto-merge without review |
-| Layered classification (domain rules → OG metadata → API fallback) | Automatically files bookmarks into sensible categories without requiring an API key for common sites | HIGH | (1) Built-in domain→category map for well-known domains (github.com→Dev, youtube.com→Video, etc.); (2) Extract `og:type`, `og:title`, meta description during the link-check fetch; (3) Free API (uClassify, Klazify) for genuinely unknown sites; no API key required for 80–90% coverage |
-| Proposed folder hierarchy derived from the collection | No other file-based cleaner proposes a *new* structure; they only clean the existing one | HIGH | Propose max 3-level hierarchy; top-level from a fixed sensible taxonomy (see Taxonomy section); merge thin folders (<5 items) into parent or similar sibling; propose, don't enforce |
-| Drag-and-drop editing of proposed structure | User gets final control; moves items between proposed folders before export | MEDIUM | Tree UI with drag-and-drop; rename folder; merge two folders by dragging one onto another; undo last action |
-| Collapsed duplicate folder tree detection | When users have accidentally imported bookmarks twice, entire subtrees are duplicated — exact-URL dedup alone doesn't catch the structural duplication | HIGH | Compare folder trees structurally (same name, same URL children regardless of order); flag as duplicated subtree; propose deletion of redundant copy |
-| URL normalization (tracking param stripping) | Bookmarks saved from email/social have UTM params; normalized duplication catches these | LOW | Strip utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid, gclid, ref, source before dedup comparison; keep original URL in the output (just compare normalized) |
-| Per-item manual override | User can disagree with any classification and move/keep/delete individual bookmarks | MEDIUM | Right-click context menu on any item in the proposed tree: move to different folder, mark as keep (lock), delete |
-| Scan summary statistics | Shows the scale of cleanup: "1,247 checked, 89 dead (7%), 143 dupes removed, 12 folders merged" | LOW | Summary panel; gives users confidence the tool did real work |
+| Predefined sub-category taxonomy per top-level category | Consistent, recognisable structure rather than algorithmically-derived noise | LOW-MEDIUM | Predefined is more reliable than derived for small datasets |
+| Threshold control to avoid unnecessary splitting | Small categories should not get sub-folders nobody asked for | LOW | A single configurable constant is sufficient; not a user-facing setting |
+| "Other" sub-folder as catch-all within each category | Items that don't fit sub-categories still have a home | LOW | Avoids classification dead-ends |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+### Sub-Category Taxonomy (Predefined, per Research)
 
-Features that seem good but create problems, increase scope unnecessarily, or undermine the core value.
+This is a proposed set of sub-categories per top-level category based on observed developer
+bookmark collections, standard taxonomy structures, and the existing DOMAIN_RULES map.
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Auto-delete without review | "Just clean it for me" — users want zero friction | Irreversible data loss; users don't trust tools that silently delete; one bad false positive destroys trust permanently | Always show a review step; present proposed deletions as a list user must confirm; never delete without explicit confirmation |
-| Cloud sync / account system | "Save my cleaned bookmarks in the cloud" | Completely changes the security model; users chose a local tool because bookmarks are sensitive (banking, private projects, personal accounts); cloud = new attack surface + GDPR complexity | File-in/file-out is the product; export the clean HTML and import into Chrome natively |
-| Browser extension (live sync) | "Keep bookmarks clean automatically over time" | Extensions require different permissions model, manifest V3 constraints, Chrome Web Store review, ongoing maintenance; out of scope for v1 | File-based one-shot workflow is simpler, more portable, works for all Chromium-based browsers |
-| Firefox/Safari format support | "I use Firefox too" | Different export formats, different attribute sets, significant parsing complexity for v1 | Chrome Netscape format only for v1; formats can be added later since parsing is isolated |
-| AI-powered "smart" categorization (LLM) | "Use ChatGPT to categorize my bookmarks" | LLM API calls for 1,000 bookmarks = significant cost or rate limit pain; latency is high; requires API key; overkill when domain rules + OG metadata covers 80–90% | Layered approach (domain map → metadata → free API) achieves good coverage without LLM cost |
-| Automatic scheduling / background cleanup | "Run this weekly" | Requires OS-level scheduling, persistent process, complex state management; turns a simple tool into a daemon | Instruct user to re-run manually when bookmarks get messy again; one-shot is the product |
-| Tag system | "Let me tag bookmarks across folders" | Netscape bookmark format has no tag field; tags don't survive Chrome import/export round-trip; adds UI complexity | Folder hierarchy provides organization; keep it simple for what Chrome natively supports |
-| Real-time link re-checking | "Check if a link is still live every time I open the app" | Running hundreds of concurrent HTTP requests on startup is hostile to networks and target servers | One-shot check per session; user re-runs the tool when needed |
+**Development** (most likely to overflow — 143 domain rules mostly point here):
+- Frontend — HTML, CSS, JS, React, Vue, design systems, browser APIs
+- Backend — Node, Python, Go, databases, APIs, server tooling
+- DevOps / Cloud — Docker, Kubernetes, AWS, GCP, Azure, CI/CD, Terraform
+- Tools — IDEs, code playgrounds, formatters, regex testers, generators
+- Learning — tutorials, courses, documentation sites, reference docs
+- Other — anything in Development that doesn't match above sub-categories
+
+**Design:**
+- Inspiration — Dribbble, Awwwards, design portfolios
+- Assets — fonts, icons, image libraries, stock photos
+- Tools — Figma, Sketch, colour pickers, SVG editors
+- Other
+
+**Learning / Reference:**
+- Courses — Coursera, Udemy, Egghead, Frontend Masters
+- Documentation — MDN, official language/framework docs
+- Articles — one-off reads, blog posts, tutorials
+- Other
+
+**News:**
+- Tech — Hacker News, Ars Technica, The Verge, TechCrunch
+- General — NYT, Guardian, BBC, Reuters
+- Other
+
+**Social / Community:**
+- Forums — Reddit, HN, Lobste.rs, Stack Overflow
+- Professional — LinkedIn, Twitter/X
+- Messaging — Discord, Slack
+- Other
+
+**Shopping**, **Finance**, **Video**, **Tools**: These categories rarely overflow past the
+threshold; no predefined sub-categories needed for v1.1. If they do overflow, route to "Other"
+within the category.
+
+### Threshold for Triggering Sub-Categorisation
+
+Research finding (MEDIUM confidence, derived from bookmark organiser UX guides and cognitive load
+literature): A folder becomes "browsable" at fewer than ~20–25 items. Users start feeling friction
+at 30+ and frustration at 50+. No industry-standard threshold exists for auto-sub-categorisation
+tools.
+
+**Recommendation: split when a top-level category contains > 20 links.**
+
+Rationale:
+- 20 links in a folder is 1–2 screenfuls; still manageable.
+- Sub-categorising a 12-item "Design" folder produces noise, not value.
+- The threshold is a constant in `hierarchyBuilder.js`, not user-facing, so it can be tuned
+  without API changes.
+
+### Predefined vs Derived Sub-Categories
+
+**Predefined wins here.** Reasons:
+1. The domain rules map (`DOMAIN_RULES`) already assigns bookmarks to known categories. The
+   domains that map to "Development" can be further tagged as frontend/backend/devops at the
+   domain-rules level — no text analysis needed.
+2. Derived sub-categories (e.g. TF-IDF clusters) require enough items per cluster to be
+   meaningful. With 20–50 bookmarks in a category, TF-IDF clustering produces unstable,
+   unrecognisable labels ("javascript react component" is not a folder name).
+3. Predefined taxonomy produces consistent, expected folder names that users recognise and trust.
+4. Personalisation (users renaming folders) is already supported by the context menu; they can
+   rename "Frontend" to "JS" if they prefer.
+
+### Implementation Dependencies
+
+- Builds directly on `buildHierarchy()` in `src/hierarchyBuilder.js` — it currently groups links
+  into top-level folders. Sub-categorisation is an extension of step 3 (folder node creation).
+- The `DOMAIN_RULES` map in `src/classifier.js` needs sub-category tags added. Two approaches:
+  - Option A: Add a second-tier field to DOMAIN_RULES (e.g. `{ category: 'Development', sub: 'DevOps / Cloud' }`).
+  - Option B: Keep DOMAIN_RULES flat and add a separate SUB_CATEGORY_RULES map keyed on the same
+    hostname. This is cleaner for the existing code that reads `DOMAIN_RULES`.
+  - Recommendation: Option B — separate map, no mutation to the existing structure.
+- `classifyNode()` would be extended to add a `subCategory` field alongside `category`.
+- `buildHierarchy()` would add a nested step: after grouping by category, if `catLinks.length >
+  SUBCATEGORY_THRESHOLD`, group catLinks by `subCategory` and emit sub-folder nodes.
+- Sub-category labels for items not in the new sub-rules map default to `'Other'`.
 
 ---
 
-## Domain-Specific Research Findings
+## Feature 2: Classification Quality Improvement
 
-### Dead Link Checking Strategy
+### What Users Expect
 
-Based on analysis of existing tools (AM-DeadLink, Bookmarks-Checker, KK Bookmark Checker, open-source checkers):
+The classifier should produce sensible folder assignments for bookmarks from sites it hasn't seen
+before. Getting "Other" for 30% of a collection feels like the tool gave up. Users expect
+classification to work for at least 80–90% of a typical personal collection without any API keys.
 
-**Request strategy:**
-- Start with HTTP HEAD (smaller response, faster); fall back to GET if HEAD returns 405 Method Not Allowed
-- Follow up to 5 redirects; treat redirect chains that resolve to a 2xx as alive
-- Status codes to treat as dead: connection refused, timeout, DNS failure, 4xx (except 401/403 which mean the page exists), 5xx
-- Status codes to treat as alive: 2xx, 301/302/307/308 that resolve to 2xx, 401/403 (protected but present)
-- Status codes requiring caution: 429 (rate-limited, not dead — back off and retry later)
+### Table Stakes
 
-**Concurrency:**
-- Default 5–10 concurrent workers; configurable down to 1–2 for cautious mode
-- Domain-level concurrency cap: max 2 concurrent requests to same domain to avoid triggering rate limits
-- Timeout: 8–10 seconds per request (5s is too aggressive; some legitimate slow sites time out)
-- Queue-based processing with a semaphore; emit progress events per completed check
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Expanded domain rules coverage | 143 rules is a start; real collections have long-tail domains | LOW | Pure data addition, no code change |
+| Reasonable fallback for unknowns | "Other" catch-all is acceptable only for truly obscure sites | LOW | Already exists; quality improvement reduces how often it fires |
 
-**Rate limit handling:**
-- On 429: respect `Retry-After` header if present; otherwise exponential backoff (1s, 2s, 4s, 8s) with jitter
-- Don't mark 429 as dead — mark as "rate-limited, could not verify" and surface separately
+### Differentiators
 
-### URL Deduplication Approach
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Sub-domain awareness | `docs.python.org` → Development/Documentation; `shop.brand.com` → Shopping | LOW-MEDIUM | Pattern matching on hostname segments before full lookup |
+| URL path hints | `/blog/`, `/shop/`, `/docs/`, `/wiki/` in path are strong signals even for unknown hosts | LOW | Regex patterns on `pathname` component of URL |
+| Expanded keyword coverage per category | More keywords = fewer "Other" escapes from the metadata layer | LOW | Pure data addition to `CATEGORY_KEYWORDS` |
+| Title-based first-word matching | Page titles often lead with the category: "How to use Docker..." → Development | LOW | Trivial extension of existing `classifyByMetadata` |
 
-Based on BrowserBookmarkChecker, bookmarks-dedupe, and URI normalization literature:
+### What NOT to Do (Anti-Features for Classification)
 
-**Normalization pipeline (compare normalized, store original):**
-1. Lowercase scheme and host
-2. Remove default port (`:80` for http, `:443` for https)
-3. Strip tracking query params: `utm_*`, `fbclid`, `gclid`, `ref`, `source`, `mc_*`
-4. Sort remaining query params alphabetically
-5. Remove trailing slash from path (except root `/`)
-6. Decode percent-encoded characters that are safe to decode
+| Feature | Why Problematic | What to Do Instead |
+|---------|-----------------|-------------------|
+| TF-IDF weighting | Requires a corpus to compute IDF; at individual bookmark scale (single document per URL), TF-IDF degenerates to TF — just keyword frequency. No benefit over current keyword scanning. | Expand `CATEGORY_KEYWORDS` lists; prioritise longer/more specific phrases |
+| ML model embedding | Would produce better accuracy but introduces a model file, compute cost, and a build dependency — violates "clone + npm start" constraint | Domain rules + URL path hints + expanded keywords covers 85–90% |
+| Free classification API (uClassify) | Listed in CLAUDE.md as "Out of Scope — uncertain longevity" | Stick with local-only classification |
+| LLM calls for classification | Cost, latency, API key requirement; overkill when 90%+ is classifiable locally | Local rules + metadata is sufficient |
 
-**Deduplication scope:**
-- Exact URL (post-normalization): definitive duplicate — remove silently (or flag)
-- Same normalized URL, different title: flag for user review (one might be more descriptively titled)
-- Same domain + nearly identical title (fuzzy): surface as "possible duplicate" for user decision
+### Fallback Chain (Revised)
 
-### Fuzzy Folder Name Merging
+Current chain: `domain rules → OG metadata keywords → "Other"`
 
-Based on BrowserBookmarkChecker (RapidFuzz, threshold 85) and general fuzzy matching literature:
+Proposed improved chain (all local, no API):
+1. `classifyByDomain(url)` — existing, look up full hostname (strips www.)
+2. NEW: `classifyBySubdomain(url)` — pattern-match on subdomain prefix (docs.*, shop.*, blog.*, api.*, cdn.*)
+3. NEW: `classifyByUrlPath(url)` — pattern-match on pathname segments (/blog/, /docs/, /shop/, /wiki/, /learn/, /courses/)
+4. `classifyByMetadata(metadata)` — existing, keyword scan on title + description
+5. NEW: `classifyByTitleFirstWords(metadata)` — extract first 3–4 words from title; scan against category indicator words
+6. `'Other'` — only fires if all of above return null
 
-**Algorithm:** Levenshtein distance or Jaro-Winkler (better for short strings like folder names)
-**Threshold:** 80–90% similarity; configurable
-**Implementation:** Compare lowercased, trimmed names; strip common prefixes/suffixes ("My ", "All ", "The ")
-**User review required:** Never auto-merge folders; always present "Did you mean to merge these?" with user confirmation
-**Edge cases:** Single-word folders ("Dev", "Design") are too ambiguous for fuzzy match — require higher threshold
+Steps 2, 3, 5 are cheap string operations with no network cost. They can be added to `classifier.js`
+without changing the call sites in `classifyNode()`, just by extending the chain before the
+`'Other'` fallback.
 
-### Classification Layers
+### URL Path Hints (Concrete Patterns)
 
-Based on research into URL categorization approaches:
+| Path pattern | Inferred category |
+|---|---|
+| `/docs/` or `/documentation/` | Reference |
+| `/blog/` | News (or Learning if `tutorial` in title) |
+| `/wiki/` | Reference |
+| `/shop/` or `/store/` or `/products/` | Shopping |
+| `/learn/` or `/courses/` or `/tutorial/` | Learning |
+| `/api/` | Development |
 
-**Layer 1 — Domain rules map (HIGH confidence, zero latency):**
-- Hard-coded map of well-known domains to categories
-- Examples: `github.com`, `gitlab.com`, `stackoverflow.com` → Dev; `youtube.com`, `vimeo.com` → Video; `nytimes.com`, `bbc.com`, `reuters.com` → News
-- Covers 40–60% of typical bookmark collections (power users heavily use a small set of popular domains)
-- Build as a JSON file, easy to extend
+These patterns are applied only when domain lookup and subdomain lookup both return null. They
+provide a coarse but reliable signal for long-tail sites.
 
-**Layer 2 — Page metadata from link-check fetch (MEDIUM confidence, no extra cost):**
-- Already fetching the page for dead-link checking — extract `og:type`, `og:title`, `og:description`, `<meta name="description">`, `<title>`
-- Pass the combined text through keyword-category matching (e.g., words like "tutorial", "documentation", "docs" → Dev/Reference)
-- Adds classification for sites not in the domain map with no extra network cost
+### Subdomain Patterns (Concrete Patterns)
 
-**Layer 3 — Free classification API (LOW-MEDIUM confidence, API call required):**
-- uClassify (free tier, requires account key); Klazify (IAB V2 taxonomy, has free tier)
-- Only call for bookmarks that layers 1 and 2 could not classify
-- Make this layer optional/opt-in — tool works without it
-- uClassify uses a "Topics" classifier that maps to broad categories adequate for bookmark folders
+| Subdomain prefix | Inferred category |
+|---|---|
+| `docs.` | Reference |
+| `api.` or `developer.` | Development |
+| `blog.` | News |
+| `shop.` or `store.` | Shopping |
+| `learn.` or `courses.` | Learning |
+| `cdn.` or `static.` or `assets.` | (skip — likely not a navigable bookmark) |
 
-**Comparison of approaches:**
+### Expanded Domain Rules
 
-| Approach | Accuracy | Cost | Latency | Requires Key? |
-|----------|----------|------|---------|---------------|
-| Domain rules map | HIGH for known domains; 0% for unknowns | None | Zero | No |
-| OG/meta extraction | MEDIUM (depends on site quality) | None (piggybacks) | Already paying for link check | No |
-| Free text classification API | MEDIUM-HIGH | Free tier limits | +100–500ms per call | Yes (free registration) |
-| ML/LLM API (e.g., GPT) | HIGH | $$$ | +500ms–2s per call | Yes (paid) |
+The existing 143 entries are good for English-speaking power users but miss:
+- Regional news sites (e.g. `spiegel.de`, `lemonde.fr`)
+- Developer tools added since the map was built (e.g. `bun.sh`, `deno.land`, `fly.io`, `railway.app`, `cursor.sh`)
+- Design tools (e.g. `framer.com`, `webflow.com`, `spline.design`)
 
-Recommendation: Domain rules → metadata → free API is the right layered approach. LLM is overkill for this task.
+Adding 30–50 entries to `DOMAIN_RULES` is pure data and requires no test infrastructure changes.
 
-### Sensible Bookmark Taxonomy
+### Implementation Dependencies
 
-Based on community patterns (Quora, Medium organization guides, Raindrop.io default collections, power-user recommendations):
+- All changes are in `src/classifier.js` — self-contained.
+- `classifyNode()` signature and return shape unchanged — no downstream breakage.
+- The extended fallback chain is additive; existing unit tests remain valid.
+- New unit tests needed for: subdomain patterns, path patterns, expanded keyword matching.
 
-**Recommended top-level categories (max 12–15):**
+---
 
-| Category | Typical Contents |
-|----------|-----------------|
-| Dev | GitHub, docs, tutorials, Stack Overflow, APIs, tools |
-| Design | Dribbble, Figma resources, inspiration, UI libraries |
-| Reading | Long-form articles, essays, newsletters, Substack |
-| News | News outlets, current events, media |
-| Reference | Wikipedia, documentation, RFCs, specs, how-tos |
-| Video | YouTube, Vimeo, Twitch, courses |
-| Shopping | Amazon, product pages, wishlists |
-| Tools | SaaS products, utilities, web apps |
-| Work | Project-specific links, internal tools, company resources |
-| Finance | Banking, investing, financial tools |
-| Social | Twitter/X, LinkedIn, forums, communities |
-| Personal | Health, travel, hobbies, local |
-| Inbox | Unclassified / "to sort later" catch-all |
+## Feature 3: Drag-and-Drop Folder Reordering
 
-**Taxonomy principles from research:**
-- Max 3 levels deep (any deeper and users forget where things are)
-- Max ~15 top-level folders (cognitive load limit)
-- Merge thin folders (<5 items) into a parent or "Misc" sibling
-- "Inbox" as a catch-all is better than leaving items unclassified
-- The tool should derive the actual categories from the collection — not all users need all 15 categories
+### What Users Expect
+
+After seeing a proposed hierarchy, users want to reorder top-level categories to match their
+mental model (e.g. put "Development" first, push "Shopping" to the bottom). This is a strong
+expectation from any tree UI — drag-and-drop reordering of peer-level items is a standard
+affordance in file managers, Notion, Obsidian, and browser bookmark bars. Without it, the only
+option is the existing context menu (delete/move/keep) which doesn't support reordering.
+
+### Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Drag folders to reorder within same parent | Core expectation of any tree with a user-editable list | MEDIUM | SortableJS on each folder's children container |
+| Visual drop indicator (insertion line) | Without clear drop feedback, users misplace items | MEDIUM | A horizontal line showing insertion point — standard pattern |
+| Drag handle icon on folder rows | Distinguishes "this is draggable" from "this is a click target" | LOW | ⠿ or ⋮⋮ grip icon, cursor: grab on hover |
+| Dragged item appears "lifted" (opacity/shadow) | Confirms to user the item is being moved | LOW | CSS: opacity: 0.5 + box-shadow on the dragged element |
+
+### Differentiators (for this tool specifically)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Moving bookmarks between folders via drag | Richer editing than context menu alone | HIGH | Requires cross-folder group config in SortableJS; significant state sync complexity |
+| Drag folder INTO another folder (nest) | Merge by dragging | HIGH | Very hard to implement without accidental nesting; high error rate in practice |
+
+### Anti-Features (Scope Boundaries)
+
+| Feature | Why Requested | Why Problematic for v1.1 | Alternative |
+|---------|---------------|--------------------------|-------------|
+| Moving bookmarks via drag (cross-folder) | "Just drag it to the right folder" | Requires SortableJS cross-group config + complex server state sync + UI diff of which links moved where. The context menu (move) already covers this use case adequately. | Existing context menu "Move to folder" covers the same action with less risk |
+| Drag folder into another folder (deep nesting) | "I want to reorganise the whole tree" | Creates accidental nesting; depth constraint becomes hard to enforce; undo needed | Defer to v2; note context menu handles individual moves |
+| Undo for drag operations | "I dragged to the wrong spot" | Adds full history stack and revert UI. Significant complexity. | Instruct user to re-classify from scratch if structure is wrong; undo is v2+ |
+| Keyboard drag (a11y) | Accessibility completeness | Out of scope for a personal local tool that one person uses. | Arrow-key reordering via context menu is the alternative |
+
+### Recommended Scope for v1.1
+
+**Only folder reordering within the same parent level.** Specifically:
+- Top-level category folders can be dragged to reorder them relative to each other.
+- Sub-category folders (level 2) can be dragged to reorder within their parent category.
+- Individual bookmarks (links) are NOT draggable — use the existing context menu for link moves.
+- Folders cannot be dragged into other folders — no nesting via drag.
+
+This gives the user the most-requested capability (choose the order of "Development", "Design",
+"News", etc.) without the complexity and error risk of cross-folder or cross-level moves.
+
+### UX Patterns (Specific and Concrete)
+
+**Drag handle placement:**
+- A `⠿` or `⋮⋮` grip icon appears at the LEFT edge of each folder header row.
+- The grip icon is always visible (not hover-only) — users need to know folders are draggable
+  without having to discover it by accident.
+- Cursor changes to `grab` on hover over the grip, `grabbing` during drag.
+- The rest of the folder header retains `pointer` cursor for click-to-expand.
+
+**During drag visual state:**
+- The dragged folder row: `opacity: 0.4`, subtle `box-shadow`, `cursor: grabbing`.
+- A horizontal insertion line (2px, accent colour, spans full row width) shows the drop target
+  position — appears between items based on mouse Y position vs item midpoints.
+- The insertion line moves in real time as the cursor moves through the dragover zone.
+- Drop targets that would violate depth constraints (e.g. dragging a folder into a link row) show
+  no insertion line and the cursor shows `not-allowed`.
+
+**After drop:**
+- The folder snaps to its new position.
+- The dragged item returns to normal opacity and shadow immediately.
+- The insertion line disappears.
+- The new order is persisted to the server via a `POST /api/edit` call with `op: 'reorder'`,
+  sending the parent folder ID and new ordered array of child IDs.
+
+**Events used (HTML5 Drag API):**
+- `dragstart` on folder header: set `dataTransfer.effectAllowed = 'move'`; tag the dragged node
+  id on a shared variable.
+- `dragover` on sibling folder rows and the parent container: `preventDefault()` to allow drop;
+  compute Y-midpoint of each child to determine insertion position; render insertion line.
+- `dragleave` on the container: clear insertion line.
+- `drop` on the container: read dragged node id; compute new index from insertion line position;
+  update tree state; POST to server.
+- `dragend` on the folder: clean up visual state regardless of whether drop succeeded.
+
+**SortableJS vs Native HTML5 Drag API:**
+
+Two options exist for the right-panel tree (which uses vanilla DOM rendering via `renderTree()`
+in `app.js`):
+
+| Option | Pros | Cons | Fit |
+|--------|------|------|-----|
+| Native HTML5 Drag API | Zero dependency, already works with DOM-rendered tree, full control over insertion line | More code for insertion line + midpoint detection | Good — app.js uses vanilla DOM |
+| SortableJS (CDN) | Less code, handles edge cases | Another CDN dependency; Alpine.js Sort plugin requires x-for rendered lists, not DOM-rendered trees | Awkward — the tree is DOM-rendered not Alpine x-for |
+
+**Recommendation: Native HTML5 Drag API.** The `renderTree()` function builds the DOM directly
+and the app avoids framework lock-in. SortableJS integration with the DOM-rendered tree would
+require restructuring how the tree renders (moving to x-for lists). Native drag API gives full
+control and the implementation is well-understood (MDN docs, multiple tutorials).
+
+An alternative is SortableJS loaded via CDN and called imperatively after `renderTree()` by
+attaching a new `Sortable` instance to each `tree-children` container. This avoids restructuring
+the renderer and is a lower-risk approach — SortableJS handles the insertion indicator internally.
+
+### State Synchronisation
+
+The classified tree (`session.classifiedTree`) is the source of truth on the server. After a
+reorder drag, the new child order must be sent to the server.
+
+Proposed API extension to `POST /api/edit`:
+```
+{ op: 'reorder', folderId: '<uuid>', childIds: ['<id1>', '<id2>', ...] }
+```
+
+The server's `treeOps.js` would gain a `reorderChildren(tree, folderId, childIds)` function that
+finds the folder by id and reorders its children array to match `childIds`. Returns the updated
+tree. Pattern is identical to existing `deleteNode` / `moveNode`.
+
+### Implementation Dependencies
+
+- `renderTree()` in `public/app.js` — needs drag event listeners added to folder header rows, or
+  SortableJS attached to `.tree-children` containers.
+- `src/shared/treeOps.js` — needs a new `reorderChildren` function.
+- `src/routes/edit.js` — needs to handle `op: 'reorder'` in the switch.
+- The RIGHT panel only (proposed/classified tree) gets drag-and-drop. The LEFT panel (original
+  tree) remains read-only.
+- This depends on the existing review phase being in place (already built in v1.0).
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Parse Chrome HTML]
-    └──required by──> [Dead Link Checking]
-    └──required by──> [URL Deduplication]
-    └──required by──> [Folder Analysis]
-    └──required by──> [Before/After UI]
+[Sub-categorisation]
+    └──extends──> [buildHierarchy() in hierarchyBuilder.js] (v1.0)
+    └──extends──> [DOMAIN_RULES in classifier.js] (v1.0)
+    └──requires──> [classifyNode() sub-category field addition]
 
-[Dead Link Checking]
-    └──provides data for──> [Metadata Extraction → Classification Layer 2]
-    └──required before──> [Export] (don't export unchecked links as clean)
+[Classification quality]
+    └──extends──> [classifyNode() chain in classifier.js] (v1.0)
+    └──independent of──> [Sub-categorisation] (but feeds into it — better sub-category labels)
 
-[URL Deduplication]
-    └──required before──> [Proposed Hierarchy] (don't classify items that will be removed)
-
-[Classification (all 3 layers)]
-    └──required before──> [Proposed Hierarchy]
-
-[Proposed Hierarchy]
-    └──required before──> [Drag-and-Drop Edit UI]
-
-[Drag-and-Drop Edit UI]
-    └──required before──> [Export Clean HTML]
-
-[Fuzzy Folder Merge]
-    └──enhances──> [Proposed Hierarchy] (fewer redundant categories)
-    └──requires──> [Parse Chrome HTML]
-
-[Collapsed Duplicate Tree Detection]
-    └──requires──> [URL Deduplication] (need normalized URLs to compare trees)
+[Drag-and-drop reordering]
+    └──extends──> [renderTree() in app.js] (v1.0)
+    └──extends──> [treeOps.js] (v1.0 — needs reorderChildren)
+    └──extends──> [edit.js route] (v1.0 — needs op: 'reorder')
+    └──independent of──> [Sub-categorisation] (folder depth doesn't affect drag logic)
+    └──independent of──> [Classification quality] (operates on already-classified tree)
 ```
 
 ### Dependency Notes
 
-- **Parse Chrome HTML is the root dependency:** Every other feature depends on it; must be solid before building anything else.
-- **Dead link checking and classification share the HTTP fetch:** The link checker's response body provides OG/meta for classification Layer 2 — one network pass does both jobs.
-- **Deduplication before classification:** No point classifying a URL that will be removed as a duplicate.
-- **Classification before proposed hierarchy:** The folder proposals are driven by classification results.
-- **Safety backup before UI renders:** The backup should be written as soon as the file is parsed, before the user sees results, so it is always there.
+- **Classification quality should land before sub-categorisation** — better category assignments
+  mean fewer "Other" items landing in sub-category buckets. If classification quality is improved
+  first, sub-category rules map covers more items correctly.
+- **Sub-categorisation and drag-and-drop are independent** — either can ship in isolation. If
+  sub-categorisation ships first, drag-and-drop still works on the new 3-level tree. If
+  drag-and-drop ships first, it works on the existing 2-level tree.
+- **Neither new feature requires changes to the link checker, parser, exporter, or dedup
+  pipeline** — all are entirely within the classifier + hierarchy builder + review UI layer.
 
 ---
 
-## MVP Definition
-
-### Launch With (v1)
-
-Minimum viable product — validates the core loop: import → clean → review → export.
-
-- [ ] Parse Chrome bookmark HTML export — without this, nothing works
-- [ ] Dead link detection (HEAD/GET, 8s timeout, 5 workers, progress indicator) — primary user pain point
-- [ ] Exact URL deduplication with normalization (tracking param stripping) — second primary pain point
-- [ ] Empty folder cleanup — always expected
-- [ ] Fuzzy folder name merging (with user confirmation step) — core differentiator from simple cleaners
-- [ ] Classification Layer 1 only (domain rules map) — provides ~50% coverage with zero dependencies
-- [ ] Proposed flat/shallow folder hierarchy from classification results — core value proposition
-- [ ] Before/after tree UI (read-only diff view) — required for user trust
-- [ ] Drag-and-drop editing of proposed structure — required for user control
-- [ ] Export clean HTML file (Chrome-importable) — final deliverable
-- [ ] Auto-backup of original on load — table stakes for trust
-
-### Add After Validation (v1.x)
-
-Features to add once core loop is proven to work.
-
-- [ ] Classification Layer 2 (OG/meta extraction from link-check fetches) — nearly free, no extra cost; add once Layer 1 is stable
-- [ ] Collapsed duplicate folder tree detection — valuable but complex; add when users with large collections report dupes that exact dedup misses
-- [ ] Classification Layer 3 (free API fallback) — add if unclassified bookmark rate is too high in practice
-- [ ] Per-item right-click context menu (move, keep, delete) — add when users report the tree editing is too coarse
-
-### Future Consideration (v2+)
-
-Features to defer until product-market fit is established.
-
-- [ ] Firefox/Safari format support — format parsing is isolated; add if users request it
-- [ ] Configurable concurrency / timeout settings UI — CLI flag is sufficient for v1
-- [ ] Bookmark age analysis (sort by ADD_DATE, flag very old bookmarks for review) — interesting but not core
-- [ ] Duplicate detection by content similarity (same article, different URLs) — very high complexity, marginal value
-
----
-
-## Feature Prioritization Matrix
+## Feature Prioritisation Matrix (v1.1)
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Parse Chrome HTML | HIGH | LOW | P1 |
-| Safety backup | HIGH | LOW | P1 |
-| Dead link detection + progress | HIGH | MEDIUM | P1 |
-| Exact URL dedup + normalization | HIGH | LOW | P1 |
-| Empty folder cleanup | MEDIUM | LOW | P1 |
-| Export clean HTML | HIGH | LOW | P1 |
-| Before/after tree UI | HIGH | MEDIUM | P1 |
-| Fuzzy folder name merge | HIGH | MEDIUM | P1 |
-| Classification Layer 1 (domain map) | HIGH | LOW | P1 |
-| Proposed hierarchy | HIGH | MEDIUM | P1 |
-| Drag-and-drop edit | HIGH | MEDIUM | P1 |
-| Classification Layer 2 (OG metadata) | MEDIUM | LOW | P2 |
-| Duplicate folder tree detection | MEDIUM | HIGH | P2 |
-| Classification Layer 3 (API) | MEDIUM | LOW | P2 |
-| Per-item context menu | MEDIUM | MEDIUM | P2 |
-| Age-based analysis | LOW | MEDIUM | P3 |
-| Content-similarity dedup | LOW | HIGH | P3 |
-
-**Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible
-- P3: Nice to have, future consideration
-
----
-
-## Competitor Feature Analysis
-
-| Feature | Chrome extension cleaners (KK, Bookmarks Detox, Bookmarks Clean Up) | AM-DeadLink (desktop app) | BrowserBookmarkChecker (open source CLI/GUI) | Our Approach |
-|---------|------|------|------|------|
-| Dead link checking | Yes, but often unreliable; no configurability | Yes, robust | No (offline-only) | Yes, HEAD+GET, configurable workers, 429 backoff |
-| URL deduplication | Exact match only | Exact match | URL canonicalization + fuzzy title | Normalized exact + tracking-param strip |
-| Fuzzy folder merge | "Bookmarks Clean Up" does exact-name merge only | No | Fuzzy title (not folder) | Fuzzy folder names with user review |
-| Classification / reclassification | None | None | None | Layered: domain map → OG metadata → API |
-| Proposed new hierarchy | None | None | None | Yes — core differentiator |
-| Before/after UI | Flat list of changes | Report view | Export only | Side-by-side tree diff |
-| Drag-and-drop editing | None | None | None | Yes, in proposed structure |
-| Privacy / local-only | Extension = Chrome access | Desktop local | Fully local | Local Node.js, no cloud |
-| Backup before delete | Rarely; some warn only | No | N/A | Auto-backup on load |
-| Export for Chrome reimport | Via Chrome sync (indirect) | Yes | Yes | Yes, primary deliverable |
+| Classification quality — expanded domain rules (data only) | HIGH | LOW | P1 |
+| Classification quality — URL path + subdomain hints | HIGH | LOW | P1 |
+| Sub-categorisation — extended hierarchyBuilder | HIGH | MEDIUM | P1 |
+| Sub-categorisation — sub-category domain rules map | HIGH | LOW | P1 |
+| Drag-and-drop folder reordering (same-level only) | MEDIUM-HIGH | MEDIUM | P1 |
+| Classification quality — expanded keyword lists | MEDIUM | LOW | P2 |
+| Drag-and-drop — move bookmarks cross-folder | MEDIUM | HIGH | P3 (defer) |
+| Drag-and-drop — drag folder into folder (nesting) | LOW | HIGH | P3 (defer) |
 
 ---
 
 ## Sources
 
-- Chrome Web Store listings: Bookmarks Clean Up, Bookmark Detox, KK Bookmark Checker, Bookmark Dead Link Scanner
-- [AM-DeadLink](https://www.aignes.com/deadlink.htm) — desktop dead link checker, v7.1 (Oct 2025)
-- [BrowserBookmarkChecker on GitHub](https://github.com/VoxHash/BrowserBookmarkChecker) — URL canonicalization + RapidFuzz fuzzy matching approach
-- [bookmarks-dedupe on GitHub](https://github.com/inversion/bookmarks-dedupe) — Chrome HTML deduplication
-- [Netscape Bookmark Format parsers](https://github.com/FlyingWolFox/Netscape-Bookmarks-File-Parser) — format specification and npm packages
-- [uClassify](https://www.uclassify.com/) — free text classification API
-- [Klazify](https://www.klazify.com/) — URL/domain classification, IAB V2 taxonomy
-- [URI normalization — Wikipedia](https://en.wikipedia.org/wiki/URI_normalization) — canonical normalization rules
-- [Raindrop.io](https://raindrop.io/) — bookmark manager feature baseline
-- [Bookmarker vs Raindrop.io comparison](https://bookmarker.cc/blog/bookmarker-vs-raindrop) — 2026 feature comparison
-- Community patterns: Quora bookmark organization threads, Medium "organizing bookmarks" guides
-- [HTTP 429 handling — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/429)
-- [Broken Link Checker — Apify](https://apify.com/automation-lab/broken-link-checker) — concurrency and timeout defaults reference
+- Alpine.js Sort plugin: https://alpinejs.dev/plugins/sort — confirmed CDN sort uses SortableJS
+- SortableJS docs: https://sortablejs.github.io/Sortable/ — nested group config, fallbackOnBody, swapThreshold
+- Cloudscape Design System drag-and-drop patterns: https://cloudscape.design/patterns/general/drag-and-drop/ — drag-indicator icon, cursor patterns, drop preview
+- MDN HTML Drag and Drop API: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API — dragstart/dragover/drop/dragend event model
+- "Building Sortable Tree" (Marc Dahmen): https://dev.to/marcantondahmen/building-sortable-tree-a-lightweight-drag-drop-tree-in-vanilla-typescript-f7l — callback pattern (onChange with source/target parent nodes)
+- Bookmarkify best practices: https://www.bookmarkify.io/blog/best-way-to-organize-bookmarks-5ceba — 2-3 level depth recommendation, cognitive load limits
+- Bookmark taxonomy gist: https://gist.github.com/RebeccaWhit3/bee652f44c69db884f302ecfdf13b02f — sub-category vocabulary reference
+- frontend-dev-bookmarks (dypsilon): https://github.com/dypsilon/frontend-dev-bookmarks — real-world developer bookmark taxonomy at scale
+- Quora bookmark organisation threads — community patterns for how developers categorise bookmarks
+- Existing v1.0 codebase: src/classifier.js (143 DOMAIN_RULES, CATEGORY_KEYWORDS), src/hierarchyBuilder.js (buildHierarchy, single-level), public/app.js (renderTree DOM implementation)
 
 ---
 
-*Feature research for: Chrome bookmark cleaner / organizer (local web app)*
-*Researched: 2026-03-23*
+*Feature research for: Chrome bookmark cleaner / organizer — v1.1 Quality & Navigation milestone*
+*Researched: 2026-03-24*
