@@ -11,6 +11,7 @@
  * @property {{title?: string, description?: string, image?: string}} [metadata] - OG/meta tags from page fetch
  * @property {string} [redirectUrl] - Original URL before redirect
  * @property {string} [finalUrl] - Final URL after redirect
+ * @property {boolean} [kept] - Set by Phase 5 edit: "mark as keep" operation
  */
 
 export {};
