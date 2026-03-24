@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Quality & Navigation
-status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-24T23:21:46.861Z"
-last_activity: 2026-03-24 — v1.1 roadmap defined (Phases 6–8)
+status: Ready to execute
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-24T23:53:43.837Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 35
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Milestone v1.1 — Phase 6: Classification Quality
+**Current focus:** Phase 06 — classification-quality
 
 ## Current Position
 
-Phase: 6 of 8 (Classification Quality)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-24 — v1.1 roadmap defined (Phases 6–8)
-
-Progress: [███████░░░░░░░░░░░░░] 35% (5/8 phases complete, 13 plans done)
+Phase: 06 (classification-quality) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -51,6 +45,7 @@ Progress: [███████░░░░░░░░░░░░░] 35% (5/
 | 05-editable-ui | 3 | ~185s | ~62s |
 
 *Updated after each plan completion*
+| Phase 06-classification-quality P01 | 320 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -65,6 +60,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Native HTML5 Drag API preferred over SortableJS — renderTree() uses imperative DOM, not Alpine x-for lists
 - [Phase 08]: @alpinejs/sort ruled out — known x-for + nested list DOM sync bug (Alpine discussion #4157)
 - [Phase 08]: isDraggingNode flag prevents context menu opening during active drag
+- [Phase 06-classification-quality]: classifyByPath and classifyBySubdomain merged into one function (D-02 option: fold into classifyByPath)
+- [Phase 06-classification-quality]: Golden-file written before any DOMAIN_RULES changes to establish baseline (D-14)
 
 ### Pending Todos
 
@@ -78,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T23:21:46.858Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-classification-quality/06-CONTEXT.md
+Last session: 2026-03-24T23:53:43.833Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

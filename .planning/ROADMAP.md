@@ -40,7 +40,7 @@
   5. Expanding CATEGORY_KEYWORDS does not silently reclassify previously correct bookmarks (golden-file test covers the baseline)
 **Plans:** 3 plans
 Plans:
-- [ ] 06-01-PLAN.md — Golden-file test, DOMAIN_RULES expansion, classifyByPath function
+- [x] 06-01-PLAN.md — Golden-file test, DOMAIN_RULES expansion, classifyByPath function
 - [ ] 06-02-PLAN.md — Hyphen-prefix folder preservation, classify route update, keyword tightening
 - [ ] 06-03-PLAN.md — Reclassify toggle UI and human verification
 

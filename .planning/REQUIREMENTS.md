@@ -7,9 +7,9 @@
 
 ### Classification Quality
 
-- [ ] **CLASS-01**: Classifier uses an expanded `DOMAIN_RULES` map (~300 entries) covering more domains across all categories
-- [ ] **CLASS-02**: Classifier applies URL path pattern hints as a 3rd fallback step (`/blog/`, `/docs/`, `/shop/`, `/api/`, etc.)
-- [ ] **CLASS-03**: Classifier applies sub-domain pattern hints (`docs.*` → Documentation, `shop.*` → Shopping, `blog.*` → Blog/News)
+- [x] **CLASS-01**: Classifier uses an expanded `DOMAIN_RULES` map (~300 entries) covering more domains across all categories
+- [x] **CLASS-02**: Classifier applies URL path pattern hints as a 3rd fallback step (`/blog/`, `/docs/`, `/shop/`, `/api/`, etc.)
+- [x] **CLASS-03**: Classifier applies sub-domain pattern hints (`docs.*` → Documentation, `shop.*` → Shopping, `blog.*` → Blog/News)
 - [ ] **CLASS-04**: `CATEGORY_KEYWORDS` tightened to reduce false positives from overloaded terms (e.g. "app", "web")
 - [ ] **CLASS-05**: Bookmarks in folders whose names start with `-` are preserved in their original folder in the classified output (not reclassified)
 - [ ] **CLASS-06**: User can opt in to classify hyphen-prefixed folder contents normally (checkbox or button in the classify step UI)
@@ -56,9 +56,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLASS-01 | Phase 6 | Pending |
-| CLASS-02 | Phase 6 | Pending |
-| CLASS-03 | Phase 6 | Pending |
+| CLASS-01 | Phase 6 | Complete |
+| CLASS-02 | Phase 6 | Complete |
+| CLASS-03 | Phase 6 | Complete |
 | CLASS-04 | Phase 6 | Pending |
 | CLASS-05 | Phase 6 | Pending |
 | CLASS-06 | Phase 6 | Pending |
