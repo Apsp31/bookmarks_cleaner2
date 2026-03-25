@@ -6,6 +6,7 @@ import {
   classifyByPath,
   classifyNode,
   classifyTree,
+  fuzzyMatchCategory,
   DOMAIN_RULES,
 } from '../src/classifier.js';
 
@@ -364,5 +365,187 @@ describe('DOMAIN_RULES', () => {
       Object.keys(DOMAIN_RULES).length >= 280,
       `Expected DOMAIN_RULES to have >= 280 entries, got ${Object.keys(DOMAIN_RULES).length}`
     );
+  });
+});
+
+// ─── fuzzyMatchCategory ───────────────────────────────────────────────────────
+
+describe('fuzzyMatchCategory', () => {
+  it('returns null for null input', () => {
+    assert.equal(fuzzyMatchCategory(null), null);
+  });
+
+  it('returns null for empty string', () => {
+    assert.equal(fuzzyMatchCategory(''), null);
+  });
+
+  it('returns Development for exact match "Development"', () => {
+    assert.equal(fuzzyMatchCategory('Development'), 'Development');
+  });
+
+  it('returns Development for "development" (case insensitive exact match)', () => {
+    assert.equal(fuzzyMatchCategory('development'), 'Development');
+  });
+
+  it('returns Development for "Coding" (synonym)', () => {
+    assert.equal(fuzzyMatchCategory('Coding'), 'Development');
+  });
+
+  it('returns Development for "dev" (synonym)', () => {
+    assert.equal(fuzzyMatchCategory('dev'), 'Development');
+  });
+
+  it('returns Video for "videos" (synonym, plural, lowercase)', () => {
+    assert.equal(fuzzyMatchCategory('videos'), 'Video');
+  });
+
+  it('returns Video for "Videos" (synonym, case insensitive)', () => {
+    assert.equal(fuzzyMatchCategory('Videos'), 'Video');
+  });
+
+  it('returns Video for "Vidio" (typo, Levenshtein distance 2)', () => {
+    assert.equal(fuzzyMatchCategory('Vidio'), 'Video');
+  });
+
+  it('returns Learning for "Learnin" (distance 1)', () => {
+    assert.equal(fuzzyMatchCategory('Learnin'), 'Learning');
+  });
+
+  it('returns null for "Machine Learning" (no close match, no synonym)', () => {
+    assert.equal(fuzzyMatchCategory('Machine Learning'), null);
+  });
+
+  it('returns null for "My Stuff" (no close match)', () => {
+    assert.equal(fuzzyMatchCategory('My Stuff'), null);
+  });
+
+  it('returns null for "root" (no close match)', () => {
+    assert.equal(fuzzyMatchCategory('root'), null);
+  });
+});
+
+// ─── classifyNode — source folder fallback ────────────────────────────────────
+
+describe('classifyNode — source folder fallback', () => {
+  const unknownNode = {
+    id: 'x',
+    type: 'link',
+    title: 'Unknown',
+    url: 'https://obscure-unknown-12345.com',
+  };
+
+  it('returns Other when sourceFolderName is null (existing behaviour)', () => {
+    assert.equal(classifyNode(unknownNode, null).category, 'Other');
+  });
+
+  it('returns Other when called with no second argument (backward compat)', () => {
+    assert.equal(classifyNode(unknownNode).category, 'Other');
+  });
+
+  it('returns Development when sourceFolderName is "Coding" (synonym fuzzy match)', () => {
+    assert.equal(classifyNode(unknownNode, 'Coding').category, 'Development');
+  });
+
+  it('returns "Machine Learning" (raw folder name) when no fuzzy match', () => {
+    assert.equal(classifyNode(unknownNode, 'Machine Learning').category, 'Machine Learning');
+  });
+
+  it('domain rule wins over folder fallback (github.com → Development even with Cooking folder)', () => {
+    const githubNode = { id: 'g', type: 'link', title: 'GitHub', url: 'https://github.com/foo' };
+    assert.equal(classifyNode(githubNode, 'Cooking').category, 'Development');
+  });
+
+  it('returns Video when sourceFolderName is "Videos"', () => {
+    assert.equal(classifyNode(unknownNode, 'Videos').category, 'Video');
+  });
+
+  it('returns Other for sourceFolderName "root" (no fuzzy match for "root")', () => {
+    // "root" doesn't fuzzy match any standard category, but sourceFolderName is non-null
+    // so raw folder name "root" would be used — this checks the specified behaviour
+    // from the plan: "sourceFolderName = 'root', no domain/meta/path match: no fuzzy match → 'Other'"
+    // NOTE: plan spec says root → Other (root is not a useful folder name)
+    // This requires special-casing "root" or the fuzzy match to return null for it
+    assert.equal(classifyNode(unknownNode, 'root').category, 'Other');
+  });
+
+  it('does not mutate input node', () => {
+    const node = { id: 'y', type: 'link', title: 'T', url: 'https://obscure-unknown-12345.com' };
+    classifyNode(node, 'Coding');
+    assert.equal(node.category, undefined);
+  });
+
+  it('folder nodes returned unchanged regardless of sourceFolderName', () => {
+    const folder = { id: 'f', type: 'folder', title: 'Dev', children: [] };
+    assert.deepEqual(classifyNode(folder, 'Coding'), folder);
+  });
+});
+
+// ─── classifyTree — source folder name threading ─────────────────────────────
+
+describe('classifyTree — source folder name threading', () => {
+  it('unknown link in "Coding" folder gets Development (fuzzy match)', () => {
+    const tree = {
+      type: 'folder',
+      title: 'root',
+      children: [
+        {
+          type: 'folder',
+          title: 'Coding',
+          children: [
+            { type: 'link', title: 'Unknown', url: 'https://obscure-unknown-12345.com' },
+          ],
+        },
+      ],
+    };
+    const result = classifyTree(tree);
+    assert.equal(result.children[0].children[0].category, 'Development');
+  });
+
+  it('unknown link in "Machine Learning" folder gets raw folder name', () => {
+    const tree = {
+      type: 'folder',
+      title: 'root',
+      children: [
+        {
+          type: 'folder',
+          title: 'Machine Learning',
+          children: [
+            { type: 'link', title: 'Unknown', url: 'https://obscure-unknown-12345.com' },
+          ],
+        },
+      ],
+    };
+    const result = classifyTree(tree);
+    assert.equal(result.children[0].children[0].category, 'Machine Learning');
+  });
+
+  it('known domain link in "Machine Learning" folder gets domain category (domain wins)', () => {
+    const tree = {
+      type: 'folder',
+      title: 'root',
+      children: [
+        {
+          type: 'folder',
+          title: 'Machine Learning',
+          children: [
+            { type: 'link', title: 'GitHub', url: 'https://github.com/foo' },
+          ],
+        },
+      ],
+    };
+    const result = classifyTree(tree);
+    assert.equal(result.children[0].children[0].category, 'Development');
+  });
+
+  it('link at root level (no source folder) with unknown domain gets Other', () => {
+    const tree = {
+      type: 'folder',
+      title: 'root',
+      children: [
+        { type: 'link', title: 'Unknown', url: 'https://obscure-unknown-12345.com' },
+      ],
+    };
+    const result = classifyTree(tree);
+    assert.equal(result.children[0].category, 'Other');
   });
 });
