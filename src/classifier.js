@@ -2,14 +2,17 @@
  * Classifier Pipeline
  *
  * Exports:
- *   DOMAIN_RULES            – plain object mapping hostname → category label (~300 entries)
- *   CATEGORY_KEYWORDS       – object mapping category → keyword array (ordered specific-first)
- *   classifyByDomain(url)   – looks up hostname in DOMAIN_RULES, strips www. prefix
- *   classifyByMetadata(m)   – keyword-scans OG title+description, returns first match or null
- *   classifyByPath(url)     – matches URL path/subdomain patterns as 3rd fallback step
- *   classifyNode(node)      – chains domain→metadata→path→'Other', returns new node (no mutation)
- *   classifyTree(node)      – deep-walks BookmarkNode tree, classifying all link nodes
+ *   DOMAIN_RULES              – plain object mapping hostname → category label (~300 entries)
+ *   CATEGORY_KEYWORDS         – object mapping category → keyword array (ordered specific-first)
+ *   classifyByDomain(url)     – looks up hostname in DOMAIN_RULES, strips www. prefix
+ *   classifyByMetadata(m)     – keyword-scans OG title+description, returns first match or null
+ *   classifyByPath(url)       – matches URL path/subdomain patterns as 3rd fallback step
+ *   fuzzyMatchCategory(name)  – fuzzy-matches a folder name against the 10 standard categories
+ *   classifyNode(node, src)   – chains domain→metadata→path→folder fallback→'Other'
+ *   classifyTree(node)        – deep-walks BookmarkNode tree, classifying all link nodes
  */
+
+import { distance } from 'fastest-levenshtein';
 
 // ─── Domain rules map ─────────────────────────────────────────────────────────
 // Keys are bare hostnames (no www. prefix — classifyByDomain strips www. before lookup)
@@ -419,6 +422,108 @@ export const CATEGORY_KEYWORDS = {
   ],
 };
 
+// ─── Fuzzy match helpers ───────────────────────────────────────────────────────
+// Short synonym map: common aliases/plurals that should resolve to standard labels.
+// Checked BEFORE Levenshtein so deliberate aliases are never penalised by edit distance.
+const CATEGORY_SYNONYMS = {
+  'coding':        'Development',
+  'dev':           'Development',
+  'development':   'Development',
+  'programming':   'Development',
+  'videos':        'Video',
+  'movies':        'Video',
+  'films':         'Video',
+  'tv':            'Video',
+  'social':        'Social / Community',
+  'community':     'Social / Community',
+  'forums':        'Social / Community',
+  'news':          'News',
+  'articles':      'News',
+  'blogs':         'News',
+  'blog':          'News',
+  'shopping':      'Shopping',
+  'buy':           'Shopping',
+  'tools':         'Tools',
+  'utilities':     'Tools',
+  'apps':          'Tools',
+  'reference':     'Reference',
+  'references':    'Reference',
+  'docs':          'Reference',
+  'documentation': 'Reference',
+  'design':        'Design',
+  'ui':            'Design',
+  'ux':            'Design',
+  'finance':       'Finance',
+  'money':         'Finance',
+  'investing':     'Finance',
+  'learning':      'Learning',
+  'courses':       'Learning',
+  'tutorials':     'Learning',
+  'education':     'Learning',
+};
+
+const STANDARD_CATEGORIES = [
+  'Development', 'Video', 'Social / Community', 'News', 'Shopping',
+  'Tools', 'Reference', 'Design', 'Finance', 'Learning',
+];
+
+// Fuzzy match threshold: Levenshtein distance ≤ 2 OR normalised similarity ≥ 0.7
+const FUZZY_DISTANCE_THRESHOLD = 2;
+const FUZZY_SIMILARITY_THRESHOLD = 0.7;
+
+// Folder names considered too generic to use as a category fallback.
+// These are top-level Chrome bookmark bar names / browser defaults.
+const GENERIC_FOLDER_NAMES = new Set([
+  'root', 'bookmarks', 'bookmarks bar', 'bookmarks toolbar',
+  'other bookmarks', 'mobile bookmarks', 'imported',
+]);
+
+/**
+ * Fuzzy-match a source folder name against the 10 standard category labels.
+ * Returns the matching standard category, or null if no confident match.
+ *
+ * Resolution order:
+ *   1. Null / empty input → null
+ *   2. Exact match (case-insensitive) against standard categories → that category
+ *   3. Synonym map lookup (case-insensitive) → mapped category
+ *   4. Levenshtein distance ≤ FUZZY_DISTANCE_THRESHOLD (2) against standard labels → closest
+ *   5. Normalised similarity ≥ FUZZY_SIMILARITY_THRESHOLD (0.7) against standard labels → closest
+ *   6. No match → null (caller uses raw folder name instead)
+ *
+ * @param {string|null} folderName
+ * @returns {string|null} standard category label, or null
+ */
+export function fuzzyMatchCategory(folderName) {
+  if (!folderName) return null;
+  const lower = folderName.toLowerCase().trim();
+  if (!lower) return null;
+
+  // Step 1: exact match (case-insensitive)
+  const exactMatch = STANDARD_CATEGORIES.find(c => c.toLowerCase() === lower);
+  if (exactMatch) return exactMatch;
+
+  // Step 2: synonym map
+  if (CATEGORY_SYNONYMS[lower]) return CATEGORY_SYNONYMS[lower];
+
+  // Step 3 + 4: Levenshtein against each standard category (lowercase vs lowercase)
+  let bestCategory = null;
+  let bestDistance = Infinity;
+  for (const cat of STANDARD_CATEGORIES) {
+    const d = distance(lower, cat.toLowerCase());
+    if (d < bestDistance) {
+      bestDistance = d;
+      bestCategory = cat;
+    }
+  }
+  // Accept if distance ≤ threshold OR normalised similarity ≥ threshold
+  if (bestDistance <= FUZZY_DISTANCE_THRESHOLD) return bestCategory;
+  const maxLen = Math.max(lower.length, bestCategory.toLowerCase().length);
+  const similarity = 1 - bestDistance / maxLen;
+  if (similarity >= FUZZY_SIMILARITY_THRESHOLD) return bestCategory;
+
+  return null;
+}
+
 // ─── classifyByDomain ─────────────────────────────────────────────────────────
 
 /**
@@ -508,20 +613,45 @@ export function classifyByPath(url) {
 
 /**
  * Classify a single BookmarkNode link.
- * Chain: domain rules → OG metadata → path/subdomain signals → 'Other'
+ * Chain: domain rules → OG metadata → path/subdomain signals → folder name fallback → 'Other'
+ *
+ * Folder name fallback (CLASS-07):
+ *   If sourceFolderName is provided and all 3 pipeline steps return null:
+ *   - Generic folder names (root, bookmarks bar, etc.) are ignored → 'Other'
+ *   - fuzzyMatchCategory(sourceFolderName) → standard category if close match
+ *   - else raw sourceFolderName → preserves original folder grouping
+ *   If sourceFolderName is null (root-level bookmark) → 'Other' as before.
+ *
  * Returns a new node with .category set — does NOT mutate the input.
  * Folder nodes are returned unchanged.
  * @param {import('./shared/types.js').BookmarkNode} node
+ * @param {string|null} [sourceFolderName] - direct parent folder name from classifyTree
  * @returns {import('./shared/types.js').BookmarkNode}
  */
-export function classifyNode(node) {
+export function classifyNode(node, sourceFolderName = null) {
   if (node.type !== 'link') return node;
-  const category =
+  const pipelineResult =
     classifyByDomain(node.url) ??
     classifyByMetadata(node.metadata) ??
-    classifyByPath(node.url) ??
-    'Other';
-  return { ...node, category };
+    classifyByPath(node.url);
+
+  if (pipelineResult !== null && pipelineResult !== undefined) {
+    return { ...node, category: pipelineResult };
+  }
+
+  // Folder name fallback (CLASS-07)
+  if (sourceFolderName !== null) {
+    // Skip generic browser-default folder names
+    if (GENERIC_FOLDER_NAMES.has(sourceFolderName.toLowerCase())) {
+      return { ...node, category: 'Other' };
+    }
+    const fuzzy = fuzzyMatchCategory(sourceFolderName);
+    if (fuzzy) return { ...node, category: fuzzy };
+    // No fuzzy match — preserve raw folder name
+    return { ...node, category: sourceFolderName };
+  }
+
+  return { ...node, category: 'Other' };
 }
 
 // ─── classifyTree ─────────────────────────────────────────────────────────────
@@ -549,7 +679,12 @@ export function classifyTree(node, preservedFolders = new Set(), _sourceFolderNa
         && !preservedFolders.has(_sourceFolderName)) {
       return { ...node, category: _sourceFolderName };
     }
-    return classifyNode(node);
+    // If the folder was hyphen-prefixed but opted into preservedFolders, reclassify without
+    // folder name fallback (pass null) — the hyphen-prefix name is not a useful category hint.
+    const folderHint = (_sourceFolderName !== null && _sourceFolderName.startsWith('-'))
+      ? null
+      : _sourceFolderName;
+    return classifyNode(node, folderHint);
   }
   // Folder node: thread folder name to children (only direct parent — reset each level)
   const folderName = node.title ?? null;
