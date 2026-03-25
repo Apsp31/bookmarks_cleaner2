@@ -10,7 +10,7 @@
  * @param {{ id: string, type: 'folder'|'link', title: string, url?: string, children?: object[] }} node
  * @param {HTMLElement} container
  * @param {number} depth
- * @param {{ reviewMode?: boolean, mergeCandidates?: object[], duplicateSubtrees?: object[], onMerge?: Function, onKeep?: Function, onRemoveDupe?: Function, onKeepDupe?: Function }} options
+ * @param {{ reviewMode?: boolean, mergeCandidates?: object[], duplicateSubtrees?: object[], onMerge?: Function, onKeep?: Function, onRemoveDupe?: Function, onKeepDupe?: Function, onToggleReclassify?: Function, reclassifyFolders?: Set }} options
  */
 function renderTree(node, container, depth = 0, options = {}) {
   if (!node) return;
@@ -44,6 +44,22 @@ function renderTree(node, container, depth = 0, options = {}) {
     header.appendChild(toggle);
     header.appendChild(folderIcon);
     header.appendChild(label);
+
+    // Hyphen-prefix folder reclassify toggle (per D-09)
+    if (options.onToggleReclassify && node.title && node.title.startsWith('-')) {
+      const reclassifyBtn = document.createElement('button');
+      reclassifyBtn.className = 'btn-reclassify';
+      const isOptedIn = options.reclassifyFolders && options.reclassifyFolders.has(node.title);
+      reclassifyBtn.textContent = isOptedIn ? '\u2715 keep' : '\u21ba reclassify';
+      reclassifyBtn.title = isOptedIn
+        ? 'Keep this folder preserved (do not reclassify contents)'
+        : 'Reclassify contents of this folder into categories';
+      reclassifyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        options.onToggleReclassify(node.title);
+      });
+      header.appendChild(reclassifyBtn);
+    }
 
     if (options.reviewMode) {
       // Check merge candidates
@@ -233,6 +249,9 @@ document.addEventListener('alpine:init', () => {
     /** Cached count of remaining links (updated after edits) */
     remainingCount: 0,
 
+    /** Set of hyphen-prefixed folder names opted in for reclassification */
+    reclassifyFolders: new Set(),
+
     /** Count of merged folders (snapshot from cleanup phase) */
     mergedCount: 0,
 
@@ -411,21 +430,33 @@ document.addEventListener('alpine:init', () => {
 
     /** Build renderTree options object for the current review state */
     getTreeOptions() {
+      const opts = {};
       const hasReview = this.mergeCandidates.length > 0 || this.duplicateSubtrees.length > 0;
-      if (!hasReview) return {};
-      return {
-        reviewMode: true,
-        mergeCandidates: this.mergeCandidates,
-        duplicateSubtrees: this.duplicateSubtrees,
-        onMerge: (c) => this.approveMerge(c),
-        onKeep: (c) => this.keepSeparate(c),
-        onRemoveDupe: (d) => this.removeDuplicateSubtree(d),
-        onKeepDupe: (d) => {
+      if (hasReview) {
+        opts.reviewMode = true;
+        opts.mergeCandidates = this.mergeCandidates;
+        opts.duplicateSubtrees = this.duplicateSubtrees;
+        opts.onMerge = (c) => this.approveMerge(c);
+        opts.onKeep = (c) => this.keepSeparate(c);
+        opts.onRemoveDupe = (d) => this.removeDuplicateSubtree(d);
+        opts.onKeepDupe = (d) => {
           this.duplicateSubtrees = this.duplicateSubtrees.filter(
             e => !(e.keepId === d.keepId && e.removeId === d.removeId)
           );
-        },
+        };
+      }
+      opts.onToggleReclassify = (folderName) => {
+        const next = new Set(this.reclassifyFolders);
+        if (next.has(folderName)) {
+          next.delete(folderName);
+        } else {
+          next.add(folderName);
+        }
+        this.reclassifyFolders = next;  // Reassign for Alpine reactivity (Pitfall 3)
+        this.rerenderTree();  // Re-render to update badge state
       };
+      opts.reclassifyFolders = this.reclassifyFolders;
+      return opts;
     },
 
     /** Re-render the tree container with current state (review mode if candidates exist) */
@@ -484,7 +515,13 @@ document.addEventListener('alpine:init', () => {
       this.status = 'classifying';
       this.errorMsg = '';
       try {
-        const res = await fetch('/api/classify', { method: 'POST' });
+        const res = await fetch('/api/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reclassifyFolders: Array.from(this.reclassifyFolders),
+          }),
+        });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data.error || 'Classification failed');
@@ -582,6 +619,7 @@ document.addEventListener('alpine:init', () => {
       this.contextMenu = { visible: false, x: 0, y: 0, node: null };
       this.showMoveMenu = false;
       this.remainingCount = 0;
+      this.reclassifyFolders = new Set();
       this.mergedCount = 0;
 
       // Clear tree container if it still exists in DOM
