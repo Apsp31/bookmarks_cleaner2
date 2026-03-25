@@ -31,18 +31,20 @@
 ### Phase 6: Classification Quality
 **Goal**: The classifier produces more accurate category assignments for a broader range of bookmarks
 **Depends on**: Phase 5 (complete v1.0 baseline)
-**Requirements**: CLASS-01, CLASS-02, CLASS-03, CLASS-04, CLASS-05, CLASS-06
+**Requirements**: CLASS-01, CLASS-02, CLASS-03, CLASS-04, CLASS-05, CLASS-06, CLASS-07
 **Success Criteria** (what must be TRUE):
   1. Bookmarks for common long-tail domains (outside the original 143-entry map) are classified into a recognisable category rather than falling to "Other"
   2. A URL on a `docs.*` subdomain or with a `/blog/` path is classified using that structural signal when the domain rule is absent
   3. A bookmark inside a folder whose name starts with `-` appears in its original folder in the classified output, not in a reclassified category
   4. A checkbox or button in the classify step UI lets the user opt in to reclassify hyphen-prefixed folder contents normally
   5. Expanding CATEGORY_KEYWORDS does not silently reclassify previously correct bookmarks (golden-file test covers the baseline)
-**Plans:** 2/3 plans executed
+  6. A bookmark with no matching rule uses its source folder name (or a fuzzy-matched standard category) instead of "Other"
+**Plans:** 3/4 plans executed
 Plans:
 - [x] 06-01-PLAN.md — Golden-file test, DOMAIN_RULES expansion, classifyByPath function
 - [x] 06-02-PLAN.md — Hyphen-prefix folder preservation, classify route update, keyword tightening
 - [ ] 06-03-PLAN.md — Reclassify toggle UI and human verification
+- [ ] 06-04-PLAN.md — Source folder name fallback with fuzzy category matching (gap closure)
 
 ### Phase 7: Sub-Categorisation
 **Goal**: Large category folders are automatically split into named sub-folders so the hierarchy is navigable at 2–3 levels deep
@@ -78,6 +80,6 @@ Plans:
 | 3. Link Checker | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Classifier and Structure | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 5. Editable UI | v1.0 | 3/3 | Complete | 2026-03-24 |
-| 6. Classification Quality | v1.1 | 2/3 | In Progress|  |
+| 6. Classification Quality | v1.1 | 2/4 | In Progress|  |
 | 7. Sub-Categorisation | v1.1 | 0/? | Not started | - |
 | 8. Drag-and-Drop | v1.1 | 0/? | Not started | - |
