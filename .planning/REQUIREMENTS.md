@@ -13,7 +13,7 @@
 - [x] **CLASS-04**: `CATEGORY_KEYWORDS` tightened to reduce false positives from overloaded terms (e.g. "app", "web")
 - [x] **CLASS-05**: Bookmarks in folders whose names start with `-` are preserved in their original folder in the classified output (not reclassified)
 - [x] **CLASS-06**: User can opt in to classify hyphen-prefixed folder contents normally (checkbox or button in the classify step UI)
-- [ ] **CLASS-07**: When a bookmark cannot be classified by any pipeline rule, its source folder name is used as the category (fuzzy-matched against standard categories if close enough, otherwise preserved as-is); root-level bookmarks with no source folder still fall to "Other"
+- [x] **CLASS-07**: When a bookmark cannot be classified by any pipeline rule, its source folder name is used as the category (fuzzy-matched against standard categories if close enough, otherwise preserved as-is); root-level bookmarks with no source folder still fall to "Other"
 
 ### Sub-Categorisation
 

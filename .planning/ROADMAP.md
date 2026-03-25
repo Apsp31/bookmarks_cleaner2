@@ -22,7 +22,7 @@
 
 **Milestone Goal:** Upgrade classification depth and accuracy, add sub-categorisation for large folders, and introduce drag-and-drop folder reordering in the review UI.
 
-- [ ] **Phase 6: Classification Quality** — Expand domain rules coverage, add URL/subdomain pattern hints, tighten keyword precision, and preserve hyphen-prefixed folders
+- [x] **Phase 6: Classification Quality** — Expand domain rules coverage, add URL/subdomain pattern hints, tighten keyword precision, and preserve hyphen-prefixed folders (completed 2026-03-25)
 - [ ] **Phase 7: Sub-Categorisation** — Automatic sub-folders for large categories with a predefined taxonomy, deterministic node IDs, depth cap, and recursive empty-folder pruning
 - [ ] **Phase 8: Drag-and-Drop** — Folder reordering via native HTML5 drag in the right review panel with visual feedback and session persistence
 
@@ -39,12 +39,12 @@
   4. A checkbox or button in the classify step UI lets the user opt in to reclassify hyphen-prefixed folder contents normally
   5. Expanding CATEGORY_KEYWORDS does not silently reclassify previously correct bookmarks (golden-file test covers the baseline)
   6. A bookmark with no matching rule uses its source folder name (or a fuzzy-matched standard category) instead of "Other"
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 06-01-PLAN.md — Golden-file test, DOMAIN_RULES expansion, classifyByPath function
 - [x] 06-02-PLAN.md — Hyphen-prefix folder preservation, classify route update, keyword tightening
 - [x] 06-03-PLAN.md — Reclassify toggle UI and human verification
-- [ ] 06-04-PLAN.md — Source folder name fallback with fuzzy category matching (gap closure)
+- [x] 06-04-PLAN.md — Source folder name fallback with fuzzy category matching (gap closure)
 
 ### Phase 7: Sub-Categorisation
 **Goal**: Large category folders are automatically split into named sub-folders so the hierarchy is navigable at 2–3 levels deep
@@ -80,6 +80,6 @@ Plans:
 | 3. Link Checker | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Classifier and Structure | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 5. Editable UI | v1.0 | 3/3 | Complete | 2026-03-24 |
-| 6. Classification Quality | v1.1 | 3/4 | In Progress|  |
+| 6. Classification Quality | v1.1 | 4/4 | Complete   | 2026-03-25 |
 | 7. Sub-Categorisation | v1.1 | 0/? | Not started | - |
 | 8. Drag-and-Drop | v1.1 | 0/? | Not started | - |
