@@ -43,7 +43,7 @@
 Plans:
 - [x] 06-01-PLAN.md — Golden-file test, DOMAIN_RULES expansion, classifyByPath function
 - [x] 06-02-PLAN.md — Hyphen-prefix folder preservation, classify route update, keyword tightening
-- [ ] 06-03-PLAN.md — Reclassify toggle UI and human verification
+- [x] 06-03-PLAN.md — Reclassify toggle UI and human verification
 - [ ] 06-04-PLAN.md — Source folder name fallback with fuzzy category matching (gap closure)
 
 ### Phase 7: Sub-Categorisation
@@ -80,6 +80,6 @@ Plans:
 | 3. Link Checker | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 4. Classifier and Structure | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 5. Editable UI | v1.0 | 3/3 | Complete | 2026-03-24 |
-| 6. Classification Quality | v1.1 | 2/4 | In Progress|  |
+| 6. Classification Quality | v1.1 | 3/4 | In Progress|  |
 | 7. Sub-Categorisation | v1.1 | 0/? | Not started | - |
 | 8. Drag-and-Drop | v1.1 | 0/? | Not started | - |

@@ -12,7 +12,7 @@
 - [x] **CLASS-03**: Classifier applies sub-domain pattern hints (`docs.*` → Documentation, `shop.*` → Shopping, `blog.*` → Blog/News)
 - [x] **CLASS-04**: `CATEGORY_KEYWORDS` tightened to reduce false positives from overloaded terms (e.g. "app", "web")
 - [x] **CLASS-05**: Bookmarks in folders whose names start with `-` are preserved in their original folder in the classified output (not reclassified)
-- [ ] **CLASS-06**: User can opt in to classify hyphen-prefixed folder contents normally (checkbox or button in the classify step UI)
+- [x] **CLASS-06**: User can opt in to classify hyphen-prefixed folder contents normally (checkbox or button in the classify step UI)
 - [ ] **CLASS-07**: When a bookmark cannot be classified by any pipeline rule, its source folder name is used as the category (fuzzy-matched against standard categories if close enough, otherwise preserved as-is); root-level bookmarks with no source folder still fall to "Other"
 
 ### Sub-Categorisation
@@ -62,7 +62,7 @@
 | CLASS-03 | Phase 6 | Complete |
 | CLASS-04 | Phase 6 | Complete |
 | CLASS-05 | Phase 6 | Complete |
-| CLASS-06 | Phase 6 | Pending |
+| CLASS-06 | Phase 6 | Complete |
 | CLASS-07 | Phase 6 | Pending (gap closure — 06-04-PLAN.md) |
 | HIER-01 | Phase 7 | Pending |
 | HIER-02 | Phase 7 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Quality & Navigation
 status: Ready to execute
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-03-24T23:58:24.034Z"
+stopped_at: "Checkpoint: Task 2 human-verify — 06-03-PLAN.md"
+last_updated: "2026-03-25T22:56:53.307Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 06 (classification-quality) — EXECUTING
-Plan: 3 of 3
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 3 of 3
 *Updated after each plan completion*
 | Phase 06-classification-quality P01 | 320 | 1 tasks | 3 files |
 | Phase 06-classification-quality P02 | 126 | 2 tasks | 3 files |
+| Phase 06-classification-quality P03 | 1 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - [Phase 06-classification-quality]: Golden-file written before any DOMAIN_RULES changes to establish baseline (D-14)
 - [Phase 06-classification-quality]: preservedFolders Set opt-in: folders in the set are reclassified normally; hyphen-prefix folders NOT in the set are preserved
 - [Phase 06-classification-quality]: classifyTree threads only direct parent folder name — folderName resets at each level, so only direct children of hyphen-prefix folders are preserved
+- [Phase 06-classification-quality]: onToggleReclassify always present in getTreeOptions (not gated by reviewMode) — badge must show in checked state with or without merge candidates
+- [Phase 06-classification-quality]: Alpine Set reactivity: replace Set via reassignment (this.x = new Set(x)) rather than mutating in place
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T23:58:24.030Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-25T22:56:53.303Z
+Stopped at: Checkpoint: Task 2 human-verify — 06-03-PLAN.md
 Resume file: None
