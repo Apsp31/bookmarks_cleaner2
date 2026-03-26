@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 
 ## Current Position
 
-Phase: 06 (classification-quality) — EXECUTING
-Plan: 3 of 4
+Phase: 06 (classification-quality) — COMPLETE
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -74,7 +74,13 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- BUG: Allow skip/bypass of liveness check (link-check step) — user should be able to skip it
+- BUG: Time remaining indicator shows spurious precision — messy display, needs rounding/simplification
+- BUG: Deduplication fuzzy matching not working — "cakes" and "cakes (2)" shown as separate folders; "Sarah" and "Sarah's bits" shown as separate — near-duplicate folder detection needs fixing
+- BUG: Right-click move folder — works but tree doesn't update after move (no re-render)
+- BUG: Move folder context menu is hard to navigate — no arrow key support, list window too small for mousing
+- FEATURE: Drag to rearrange folders in tree (Phase 8 drag-and-drop tracks this)
+- FEATURE: Drag-based folder arrangement should inform clustering logic for next run (user arrangement as training signal)
 
 ### Blockers/Concerns
 
