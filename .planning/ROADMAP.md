@@ -23,7 +23,7 @@
 **Milestone Goal:** Upgrade classification depth and accuracy, add sub-categorisation for large folders, and introduce drag-and-drop folder reordering in the review UI.
 
 - [x] **Phase 6: Classification Quality** — Expand domain rules coverage, add URL/subdomain pattern hints, tighten keyword precision, and preserve hyphen-prefixed folders (completed 2026-03-25)
-- [ ] **Phase 7: Sub-Categorisation** — Automatic sub-folders for large categories with a predefined taxonomy, deterministic node IDs, depth cap, and recursive empty-folder pruning
+- [x] **Phase 7: Sub-Categorisation** — Automatic sub-folders for large categories with a predefined taxonomy, deterministic node IDs, depth cap, and recursive empty-folder pruning (completed 2026-03-26)
 - [ ] **Phase 8: Drag-and-Drop** — Folder reordering via native HTML5 drag in the right review panel with visual feedback and session persistence
 
 ## Phase Details
@@ -81,5 +81,5 @@ Plans:
 | 4. Classifier and Structure | v1.0 | 2/2 | Complete | 2026-03-23 |
 | 5. Editable UI | v1.0 | 3/3 | Complete | 2026-03-24 |
 | 6. Classification Quality | v1.1 | 4/4 | Complete   | 2026-03-25 |
-| 7. Sub-Categorisation | v1.1 | 0/? | Not started | - |
+| 7. Sub-Categorisation | v1.1 | 1/1 | Complete   | 2026-03-26 |
 | 8. Drag-and-Drop | v1.1 | 0/? | Not started | - |

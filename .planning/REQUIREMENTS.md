@@ -17,11 +17,11 @@
 
 ### Sub-Categorisation
 
-- [ ] **HIER-01**: `buildHierarchy` uses deterministic node IDs (not `crypto.randomUUID()`) so edit operations survive hierarchy rebuilds
-- [ ] **HIER-02**: Sub-folders created automatically when a top-level category exceeds the configured link threshold (default: 20)
-- [ ] **HIER-03**: Predefined sub-taxonomy for Development: Frontend, Backend, DevOps/Cloud, Tools, Learning, AI/ML
-- [ ] **HIER-04**: AI/ML is a recognised sub-category of Development (covering openai.com, huggingface.co, etc.)
-- [ ] **HIER-05**: Threshold is a named constant in `hierarchyBuilder.js` (not hardcoded inline)
+- [x] **HIER-01**: `buildHierarchy` uses deterministic node IDs (not `crypto.randomUUID()`) so edit operations survive hierarchy rebuilds
+- [x] **HIER-02**: Sub-folders created automatically when a top-level category exceeds the configured link threshold (default: 20)
+- [x] **HIER-03**: Predefined sub-taxonomy for Development: Frontend, Backend, DevOps/Cloud, Tools, Learning, AI/ML
+- [x] **HIER-04**: AI/ML is a recognised sub-category of Development (covering openai.com, huggingface.co, etc.)
+- [x] **HIER-05**: Threshold is a named constant in `hierarchyBuilder.js` (not hardcoded inline)
 - [ ] **HIER-06**: Folder depth is capped at 3 levels; round-trip tests assert max depth and no empty `<DL>` blocks in export
 
 ### Drag-and-Drop
@@ -64,11 +64,11 @@
 | CLASS-05 | Phase 6 | Complete |
 | CLASS-06 | Phase 6 | Complete |
 | CLASS-07 | Phase 6 | Pending (gap closure — 06-04-PLAN.md) |
-| HIER-01 | Phase 7 | Pending |
-| HIER-02 | Phase 7 | Pending |
-| HIER-03 | Phase 7 | Pending |
-| HIER-04 | Phase 7 | Pending |
-| HIER-05 | Phase 7 | Pending |
+| HIER-01 | Phase 7 | Complete |
+| HIER-02 | Phase 7 | Complete |
+| HIER-03 | Phase 7 | Complete |
+| HIER-04 | Phase 7 | Complete |
+| HIER-05 | Phase 7 | Complete |
 | HIER-06 | Phase 7 | Pending |
 | DND-01 | Phase 8 | Pending |
 | DND-02 | Phase 8 | Pending |

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Quality & Navigation
-status: Ready to plan
-stopped_at: Phase 7 context gathered (assumptions mode)
-last_updated: "2026-03-26T17:25:38.921Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 07-sub-categorisation-01-PLAN.md
+last_updated: "2026-03-26T23:07:04.354Z"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 06 — classification-quality
+**Current focus:** Phase 7 — Sub-Categorisation
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
+Phase: 7 (Sub-Categorisation) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Plan: Not started
 | Phase 06-classification-quality P02 | 126 | 2 tasks | 3 files |
 | Phase 06-classification-quality P03 | 1 | 1 tasks | 2 files |
 | Phase 06-classification-quality P04 | 300 | 1 tasks | 2 files |
+| Phase 07-sub-categorisation P01 | 148 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 06-classification-quality]: Alpine Set reactivity: replace Set via reassignment (this.x = new Set(x)) rather than mutating in place
 - [Phase 06-classification-quality]: fuzzyMatchCategory returns null for generic folder names (root, bookmarks bar) via GENERIC_FOLDER_NAMES blocklist ensuring they always fall to Other
 - [Phase 06-classification-quality]: Hyphen-prefix folders opted into preservedFolders pass null as folderHint to classifyNode — hyphen names are organisational markers, not category hints
+- [Phase 07-sub-categorisation]: Deterministic slug IDs replace crypto.randomUUID() so edit ops survive classify re-runs (HIER-01)
+- [Phase 07-sub-categorisation]: SUBCATEGORY_THRESHOLD=20 and SUBCATEGORY_MIN_COVERAGE_RATIO=0.6 exported as named constants
+- [Phase 07-sub-categorisation]: maybeSplitIntoSubfolders only splits Development in this phase; other oversized categories stay flat
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-26T17:25:38.917Z
-Stopped at: Phase 7 context gathered (assumptions mode)
-Resume file: .planning/phases/07-sub-categorisation/07-CONTEXT.md
+Last session: 2026-03-26T23:07:04.349Z
+Stopped at: Completed 07-sub-categorisation-01-PLAN.md
+Resume file: None
