@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Quality & Navigation
-status: Phase complete — ready for verification
-stopped_at: Completed 07-sub-categorisation-01-PLAN.md
-last_updated: "2026-03-26T23:07:04.354Z"
+status: Ready to plan
+stopped_at: Phase 8 context gathered
+last_updated: "2026-03-26T23:32:57.717Z"
 progress:
   total_phases: 3
   completed_phases: 2
@@ -16,15 +16,15 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 7 — Sub-Categorisation
+**Current focus:** Phase 8 — Drag-and-Drop
 
 ## Current Position
 
-Phase: 7 (Sub-Categorisation) — EXECUTING
-Plan: 1 of 1
+Phase: 8
+Plan: Not started
 
 ## Performance Metrics
 
@@ -88,12 +88,11 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- Phase 7 (Sub-Categorisation): SUBCATEGORY_TAXONOMY covers Development only; other categories may overflow threshold and fall to "Other" — measure against a real collection during execution.
-- Phase 7 (Sub-Categorisation): 60% coverage skip threshold is a heuristic — expose as SUBCATEGORY_MIN_COVERAGE_RATIO and tune during execution.
+- HIER-06 debt: exporter round-trip tests for max-depth and empty-DL-after-deletion absent — known deferred gap from Phase 7; HIER-06 remains in REQUIREMENTS.md as Pending
 - Phase 8 (Drag-and-Drop): Three-zone drop geometry (top/middle/bottom strips with getBoundingClientRect) not yet prototyped against renderTree() DOM — needs careful stopPropagation design.
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:07:04.349Z
-Stopped at: Completed 07-sub-categorisation-01-PLAN.md
-Resume file: None
+Last session: 2026-03-26T23:32:57.713Z
+Stopped at: Phase 8 context gathered
+Resume file: .planning/phases/08-drag-and-drop/08-CONTEXT.md
