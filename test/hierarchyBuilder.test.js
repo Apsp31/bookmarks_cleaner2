@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHierarchy } from '../src/hierarchyBuilder.js';
+import { buildHierarchy, SUBCATEGORY_THRESHOLD, SUBCATEGORY_MIN_COVERAGE_RATIO } from '../src/hierarchyBuilder.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -136,13 +136,13 @@ describe('buildHierarchy', () => {
     assert.equal(result.children[0].children.length, 1);
   });
 
-  it('category folder ids are valid UUIDs', () => {
+  it('category folder ids are deterministic slugs (per D-01)', () => {
     const tree = makeFolder('root', 'root', [
       makeLink('a', 'GitHub', 'https://github.com', 'Development'),
     ]);
     const result = buildHierarchy(tree);
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-    assert.match(result.children[0].id, uuidPattern);
+    assert.equal(result.id, 'folder-root');
+    assert.equal(result.children[0].id, 'folder-development');
   });
 
   it('does not mutate the input tree', () => {
@@ -166,5 +166,171 @@ describe('buildHierarchy', () => {
     assert.equal(result.children.length, 2);
     const outputLinks = collectLinks(result);
     assert.equal(outputLinks.length, 2);
+  });
+});
+
+// ─── sub-categorisation tests ─────────────────────────────────────────────────
+
+// Helper: build a 21-link Development tree with >= 60% taxonomy coverage
+function make21DevLinks() {
+  return [
+    // 4x Frontend
+    makeLink('f1', 'React',   'https://reactjs.org',           'Development'),
+    makeLink('f2', 'Vue',     'https://vuejs.org',             'Development'),
+    makeLink('f3', 'Svelte',  'https://svelte.dev',            'Development'),
+    makeLink('f4', 'Next',    'https://nextjs.org',            'Development'),
+    // 3x Backend
+    makeLink('b1', 'Spring',  'https://spring.io',             'Development'),
+    makeLink('b2', 'Go',      'https://go.dev',                'Development'),
+    makeLink('b3', 'Rust',    'https://rust-lang.org',         'Development'),
+    // 3x DevOps/Cloud
+    makeLink('d1', 'Docker',  'https://docker.com',            'Development'),
+    makeLink('d2', 'K8s',     'https://kubernetes.io',         'Development'),
+    makeLink('d3', 'AWS',     'https://aws.amazon.com',        'Development'),
+    // 3x Tools
+    makeLink('t1', 'GitHub',  'https://github.com',            'Development'),
+    makeLink('t2', 'GitLab',  'https://gitlab.com',            'Development'),
+    makeLink('t3', 'NPM',     'https://npmjs.com',             'Development'),
+    // 3x Learning
+    makeLink('l1', 'MDN',     'https://developer.mozilla.org', 'Development'),
+    makeLink('l2', 'PyDocs',  'https://docs.python.org',       'Development'),
+    makeLink('l3', 'GraphQL', 'https://graphql.org',           'Development'),
+    // 3x AI/ML
+    makeLink('a1', 'OpenAI',  'https://openai.com',            'Development'),
+    makeLink('a2', 'HF',      'https://huggingface.co',        'Development'),
+    makeLink('a3', 'Ant',     'https://anthropic.com',         'Development'),
+    // 2x unmatched
+    makeLink('u1', 'Dev1',    'https://example-dev1.com',      'Development'),
+    makeLink('u2', 'Dev2',    'https://example-dev2.com',      'Development'),
+  ];
+}
+
+describe('sub-categorisation', () => {
+  it('same input produces identical IDs on two calls (HIER-01)', () => {
+    const links = make21DevLinks();
+    const tree = makeFolder('root', 'root', links);
+    const result1 = buildHierarchy(tree);
+    const result2 = buildHierarchy(tree);
+    const getIds = (node) => {
+      const ids = [node.id];
+      for (const child of node.children ?? []) ids.push(...getIds(child));
+      return ids;
+    };
+    assert.deepEqual(getIds(result1), getIds(result2));
+  });
+
+  it('Development category with 21+ links gains sub-folders (HIER-02)', () => {
+    const tree = makeFolder('root', 'root', make21DevLinks());
+    const result = buildHierarchy(tree);
+    const devFolder = result.children.find(c => c.title === 'Development');
+    assert.ok(devFolder, 'Development folder should exist');
+    // All children of Development should be sub-folders (type: folder), not links
+    assert.ok(devFolder.children.length >= 6, 'At least 6 sub-folders should exist');
+    for (const child of devFolder.children) {
+      assert.equal(child.type, 'folder', `Expected sub-folder but got type=${child.type} (title=${child.title})`);
+    }
+  });
+
+  it('Development category with 19 links stays flat (HIER-02)', () => {
+    // 19 links, all Development
+    const links = Array.from({ length: 19 }, (_, i) =>
+      makeLink(`x${i}`, `Link ${i}`, `https://example-${i}.com`, 'Development')
+    );
+    const tree = makeFolder('root', 'root', links);
+    const result = buildHierarchy(tree);
+    const devFolder = result.children.find(c => c.title === 'Development');
+    assert.ok(devFolder, 'Development folder should exist');
+    for (const child of devFolder.children) {
+      assert.equal(child.type, 'link', `Expected link but got type=${child.type} (title=${child.title})`);
+    }
+  });
+
+  it('AI/ML sub-folder contains openai.com and huggingface.co (HIER-04)', () => {
+    const tree = makeFolder('root', 'root', make21DevLinks());
+    const result = buildHierarchy(tree);
+    const devFolder = result.children.find(c => c.title === 'Development');
+    const aimlFolder = devFolder.children.find(c => c.title === 'AI/ML');
+    assert.ok(aimlFolder, 'AI/ML sub-folder should exist');
+    const urls = aimlFolder.children.map(l => l.url);
+    assert.ok(urls.some(u => u.includes('openai.com')), 'openai.com should be in AI/ML');
+    assert.ok(urls.some(u => u.includes('huggingface.co')), 'huggingface.co should be in AI/ML');
+  });
+
+  it('Frontend sub-folder contains reactjs.org (HIER-03)', () => {
+    const tree = makeFolder('root', 'root', make21DevLinks());
+    const result = buildHierarchy(tree);
+    const devFolder = result.children.find(c => c.title === 'Development');
+    const frontendFolder = devFolder.children.find(c => c.title === 'Frontend');
+    assert.ok(frontendFolder, 'Frontend sub-folder should exist');
+    const urls = frontendFolder.children.map(l => l.url);
+    assert.ok(urls.some(u => u.includes('reactjs.org')), 'reactjs.org should be in Frontend');
+  });
+
+  it('coverage ratio guard: stays flat when < 60% match taxonomy (HIER-02/HIER-05)', () => {
+    // 21 links, only 5 match DEVELOPMENT_SUBTAXONOMY (5/21 = ~24% < 60%)
+    const links = [
+      makeLink('m1', 'React',   'https://reactjs.org',  'Development'),
+      makeLink('m2', 'Vue',     'https://vuejs.org',    'Development'),
+      makeLink('m3', 'OpenAI',  'https://openai.com',   'Development'),
+      makeLink('m4', 'Docker',  'https://docker.com',   'Development'),
+      makeLink('m5', 'GitHub',  'https://github.com',   'Development'),
+      // 16 unmatched
+      ...Array.from({ length: 16 }, (_, i) =>
+        makeLink(`u${i}`, `Unknown ${i}`, `https://obscure-dev-${i}.io`, 'Development')
+      ),
+    ];
+    const tree = makeFolder('root', 'root', links);
+    const result = buildHierarchy(tree);
+    const devFolder = result.children.find(c => c.title === 'Development');
+    assert.ok(devFolder, 'Development folder should exist');
+    // Should stay flat — all children are links, not sub-folders
+    for (const child of devFolder.children) {
+      assert.equal(child.type, 'link', `Expected link but got type=${child.type} (title=${child.title})`);
+    }
+  });
+
+  it('hyphen-prefix folders are never sub-split', () => {
+    // 25 links in category '-Pinned'
+    const links = Array.from({ length: 25 }, (_, i) =>
+      makeLink(`p${i}`, `Pinned ${i}`, `https://pinned-${i}.com`, '-Pinned')
+    );
+    const tree = makeFolder('root', 'root', links);
+    const result = buildHierarchy(tree);
+    const pinnedFolder = result.children.find(c => c.title === '-Pinned');
+    assert.ok(pinnedFolder, '-Pinned folder should exist');
+    // Should stay flat — all children are links regardless of count
+    for (const child of pinnedFolder.children) {
+      assert.equal(child.type, 'link', `Expected link but got type=${child.type}`);
+    }
+  });
+
+  it('SUBCATEGORY_THRESHOLD is exported and equals 20 (HIER-05)', () => {
+    assert.equal(SUBCATEGORY_THRESHOLD, 20);
+  });
+
+  it('SUBCATEGORY_MIN_COVERAGE_RATIO is exported and equals 0.6 (HIER-05)', () => {
+    assert.equal(SUBCATEGORY_MIN_COVERAGE_RATIO, 0.6);
+  });
+
+  it('sub-folder IDs include parent slug (HIER-01)', () => {
+    const tree = makeFolder('root', 'root', make21DevLinks());
+    const result = buildHierarchy(tree);
+    const devFolder = result.children.find(c => c.title === 'Development');
+    const aimlFolder = devFolder.children.find(c => c.title === 'AI/ML');
+    assert.ok(aimlFolder, 'AI/ML sub-folder should exist');
+    assert.equal(aimlFolder.id, 'folder-development-ai-ml');
+  });
+
+  it('maxDepth is 3 when sub-folders exist (HIER-06)', () => {
+    const tree = makeFolder('root', 'root', make21DevLinks());
+    const result = buildHierarchy(tree);
+    assert.equal(maxDepth(result), 3);
+  });
+
+  it('all links preserved after sub-splitting', () => {
+    const links = make21DevLinks();
+    const tree = makeFolder('root', 'root', links);
+    const result = buildHierarchy(tree);
+    assert.equal(collectLinks(result).length, 21);
   });
 });
