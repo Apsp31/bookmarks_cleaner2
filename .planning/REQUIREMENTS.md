@@ -26,9 +26,9 @@
 
 ### Drag-and-Drop
 
-- [ ] **DND-01**: User can drag folders to reorder them within the same parent level in the review tree UI
+- [x] **DND-01**: User can drag folders to reorder them within the same parent level in the review tree UI
 - [ ] **DND-02**: Drop targets are visually highlighted during drag; invalid targets are not highlighted
-- [ ] **DND-03**: Reorder persists to session (survives page refresh during the review workflow)
+- [x] **DND-03**: Reorder persists to session (survives page refresh during the review workflow)
 - [ ] **DND-04**: Drag interactions do not conflict with existing right-click context menu
 
 ## Future Requirements
@@ -70,9 +70,9 @@
 | HIER-04 | Phase 7 | Complete |
 | HIER-05 | Phase 7 | Complete |
 | HIER-06 | Phase 7 | Pending |
-| DND-01 | Phase 8 | Pending |
+| DND-01 | Phase 8 | Complete |
 | DND-02 | Phase 8 | Pending |
-| DND-03 | Phase 8 | Pending |
+| DND-03 | Phase 8 | Complete |
 | DND-04 | Phase 8 | Pending |
 
 **Coverage:**

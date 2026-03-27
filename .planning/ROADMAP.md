@@ -68,9 +68,9 @@ Plans:
   2. A visible insertion line appears at valid drop positions during a drag; no highlight appears over invalid targets
   3. Folder order set by drag persists after a page refresh during the review workflow
   4. Right-clicking a folder during or after a drag opens the context menu normally without triggering an unintended edit operation
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 08-01-PLAN.md — reorderNode pure function (TDD) + /api/edit reorder endpoint
+- [x] 08-01-PLAN.md — reorderNode pure function (TDD) + /api/edit reorder endpoint
 - [ ] 08-02-PLAN.md — Frontend drag event wiring, drop indicator, context menu guard, visual verification
 **UI hint**: yes
 
@@ -85,4 +85,4 @@ Plans:
 | 5. Editable UI | v1.0 | 3/3 | Complete | 2026-03-24 |
 | 6. Classification Quality | v1.1 | 4/4 | Complete   | 2026-03-25 |
 | 7. Sub-Categorisation | v1.1 | 1/1 | Complete   | 2026-03-26 |
-| 8. Drag-and-Drop | v1.1 | 0/2 | Planning complete | - |
+| 8. Drag-and-Drop | v1.1 | 1/2 | In Progress|  |

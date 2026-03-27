@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Quality & Navigation
-status: Ready to plan
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-26T23:32:57.717Z"
+status: Ready to execute
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-27T00:03:02.095Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** A single clean, importable bookmark file where every link works, nothing is duplicated, and everything is filed where you'd actually look for it.
-**Current focus:** Phase 8 — Drag-and-Drop
+**Current focus:** Phase 08 — drag-and-drop
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
+Phase: 08 (drag-and-drop) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 | Phase 06-classification-quality P03 | 1 | 1 tasks | 2 files |
 | Phase 06-classification-quality P04 | 300 | 1 tasks | 2 files |
 | Phase 07-sub-categorisation P01 | 148 | 2 tasks | 2 files |
+| Phase 08-drag-and-drop P01 | 104 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 07-sub-categorisation]: Deterministic slug IDs replace crypto.randomUUID() so edit ops survive classify re-runs (HIER-01)
 - [Phase 07-sub-categorisation]: SUBCATEGORY_THRESHOLD=20 and SUBCATEGORY_MIN_COVERAGE_RATIO=0.6 exported as named constants
 - [Phase 07-sub-categorisation]: maybeSplitIntoSubfolders only splits Development in this phase; other oversized categories stay flat
+- [Phase 08-drag-and-drop]: reorderNode takes parentFolderId as explicit param — symmetric with newIndex and avoids ambiguity during traversal
+- [Phase 08-drag-and-drop]: newIndex is post-removal index (splice semantics) — clamped after removal so max valid index equals children.length post-splice
 
 ### Pending Todos
 
@@ -93,6 +96,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:32:57.713Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-drag-and-drop/08-CONTEXT.md
+Last session: 2026-03-27T00:03:02.091Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
