@@ -88,6 +88,33 @@ export function moveNode(root, nodeId, targetFolderId) {
 }
 
 /**
+ * Reorder a node within its parent's children array.
+ * Pure function — returns a new tree without mutating the input.
+ *
+ * @param {import('./types.js').BookmarkNode} root
+ * @param {string} nodeId - ID of the child to move
+ * @param {string} parentFolderId - ID of the parent folder containing the child
+ * @param {number} newIndex - Target index in the post-removal children array
+ * @returns {import('./types.js').BookmarkNode}
+ */
+export function reorderNode(root, nodeId, parentFolderId, newIndex) {
+  function reorder(node) {
+    if (node.type !== 'folder') return node;
+    if (node.id === parentFolderId) {
+      const children = (node.children ?? []).slice();
+      const fromIndex = children.findIndex(c => c.id === nodeId);
+      if (fromIndex === -1) return { ...node, children: children.map(reorder) };
+      const [item] = children.splice(fromIndex, 1);
+      const clampedIndex = Math.max(0, Math.min(newIndex, children.length));
+      children.splice(clampedIndex, 0, item);
+      return { ...node, children };
+    }
+    return { ...node, children: (node.children ?? []).map(reorder) };
+  }
+  return reorder(root);
+}
+
+/**
  * Mark a node as kept (sets kept: true on the matching node).
  * Does not modify any other nodes.
  *
