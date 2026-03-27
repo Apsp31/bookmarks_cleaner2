@@ -86,3 +86,23 @@ Plans:
 | 6. Classification Quality | v1.1 | 4/4 | Complete   | 2026-03-25 |
 | 7. Sub-Categorisation | v1.1 | 1/1 | Complete   | 2026-03-26 |
 | 8. Drag-and-Drop | v1.1 | 1/2 | In Progress|  |
+
+### Phase 9: Drag into folders — cross-parent drag to move items into a different folder
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 9 to break down)
+
+### Phase 10: Classification quality — improve fuzzy folder matching to reduce duplicates
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 9
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 10 to break down)
