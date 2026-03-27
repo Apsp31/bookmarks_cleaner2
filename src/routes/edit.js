@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { session } from '../session.js';
-import { deleteNode, moveNode, markKeep } from '../shared/treeOps.js';
+import { deleteNode, moveNode, markKeep, reorderNode } from '../shared/treeOps.js';
 
 const router = Router();
 
@@ -25,6 +25,12 @@ router.post('/edit', (req, res) => {
     updated = moveNode(structuredClone(session.classifiedTree), nodeId, targetFolderId);
   } else if (op === 'keep') {
     updated = markKeep(structuredClone(session.classifiedTree), nodeId);
+  } else if (op === 'reorder') {
+    const { parentFolderId, newIndex } = req.body;
+    if (!parentFolderId || newIndex === undefined || newIndex === null) {
+      return res.status(400).json({ error: 'parentFolderId and newIndex are required for reorder.' });
+    }
+    updated = reorderNode(structuredClone(session.classifiedTree), nodeId, parentFolderId, Number(newIndex));
   } else {
     return res.status(400).json({ error: 'Unknown op: ' + op });
   }
