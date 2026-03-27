@@ -1,5 +1,20 @@
 # Milestones
 
+## v1.1 Quality & Navigation (Shipped: 2026-03-27)
+
+**Phases completed:** 3 phases (6–8), 7 plans, 11 tasks
+
+**Key accomplishments:**
+
+- classifyTree extended with hyphen-prefix folder preservation via folder-name threading, classify route wired to accept reclassifyFolders Set, and CATEGORY_KEYWORDS tightened by removing 11 overloaded terms without golden-file regression
+- Alpine reclassifyFolders Set with opt-in toggle badge on hyphen-prefix folders in checked state, wired to POST /api/classify body
+- fuzzyMatchCategory function added to classifier: bookmarks in topic-specific folders (Coding, Machine Learning, Videos) now receive meaningful categories instead of Other when no domain/metadata/path rule matches
+- Deterministic slug IDs and Development sub-taxonomy (Frontend/Backend/DevOps/Cloud/Tools/Learning/AI/ML) added to buildHierarchy with threshold (20) and coverage ratio (60%) guards
+- `reorderNode` pure function added to treeOps.js with 7 passing TDD tests, and `/api/edit` extended with `op:'reorder'` branch that validates, calls, and persists the reordering
+- Native HTML5 drag-and-drop wired into renderTree() with Alpine state, BoundingClientRect midpoint insertion line, and context menu guard for folder reordering in the right review panel
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-24)
 
 **Phases completed:** 5 phases, 13 plans, 27 tasks
