@@ -12,14 +12,14 @@
  * @param {number} depth
  * @param {{ reviewMode?: boolean, mergeCandidates?: object[], duplicateSubtrees?: object[], onMerge?: Function, onKeep?: Function, onRemoveDupe?: Function, onKeepDupe?: Function, onToggleReclassify?: Function, reclassifyFolders?: Set }} options
  */
-function renderTree(node, container, depth = 0, options = {}) {
+function renderTree(node, container, depth = 0, options = {}, parentId = null) {
   if (!node) return;
 
   if (node.type === 'folder') {
     // Skip the synthetic root wrapper — render its children as top-level folders
     if (depth === 0 && node.children) {
       for (const child of node.children) {
-        renderTree(child, container, 1, options);
+        renderTree(child, container, 1, options, node.id);
       }
       return;
     }
@@ -153,9 +153,28 @@ function renderTree(node, container, depth = 0, options = {}) {
       });
     }
 
+    // Drag-and-drop wiring — per D-01, D-03, D-07
+    if (options.onDragStart) {
+      header.setAttribute('draggable', 'true');
+      header.dataset.nodeId = node.id;
+
+      header.addEventListener('dragstart', (e) => {
+        options.onDragStart(node, parentId, e);
+      });
+      header.addEventListener('dragover', (e) => {
+        options.onDragOver(node, parentId, e, header);
+      });
+      header.addEventListener('drop', (e) => {
+        options.onDrop(node, e);
+      });
+      header.addEventListener('dragend', () => {
+        options.onDragEnd();
+      });
+    }
+
     if (node.children) {
       for (const child of node.children) {
-        renderTree(child, childrenEl, depth + 1, options);
+        renderTree(child, childrenEl, depth + 1, options, node.id);
       }
     }
 
@@ -254,6 +273,18 @@ document.addEventListener('alpine:init', () => {
 
     /** Count of merged folders (snapshot from cleanup phase) */
     mergedCount: 0,
+
+    /** ID of the folder currently being dragged (null when no drag active) — per D-04 */
+    draggingNodeId: null,
+
+    /** Parent folder ID of the node being dragged — for same-parent constraint per D-07 */
+    draggingParentId: null,
+
+    /** ID of the folder row currently under the cursor during drag */
+    dropTargetNodeId: null,
+
+    /** true = insert before target, false = insert after — per D-02 midpoint logic */
+    dropInsertBefore: null,
 
     /** Live progress from the SSE stream */
     checkProgress: { checked: 0, total: 0, currentUrl: '', eta: null },
@@ -548,6 +579,7 @@ document.addEventListener('alpine:init', () => {
 
     /** Open the floating context menu at click position */
     openContextMenu(node, event) {
+      if (this.draggingNodeId !== null) return; // Suppress during active drag per D-04
       event.preventDefault();
       this.showMoveMenu = false;
       this.contextMenu = { visible: true, x: event.clientX, y: event.clientY, node };
@@ -577,10 +609,7 @@ document.addEventListener('alpine:init', () => {
           const container = this.$refs.rightPanel;
           if (!container) return;
           container.innerHTML = '';
-          renderTree(this.classifiedTree, container, 0, {
-            editMode: true,
-            onContextMenu: (n, e) => this.openContextMenu(n, e),
-          });
+          renderTree(this.classifiedTree, container, 0, this.getRightPanelOptions());
         });
       } catch (err) {
         this.errorMsg = 'Edit failed — ' + (err.message || 'unknown error');
@@ -621,13 +650,142 @@ document.addEventListener('alpine:init', () => {
       this.remainingCount = 0;
       this.reclassifyFolders = new Set();
       this.mergedCount = 0;
+      this.draggingNodeId = null;
+      this.draggingParentId = null;
+      this.dropTargetNodeId = null;
+      this.dropInsertBefore = null;
+      if (this._dropIndicator) this._dropIndicator.style.display = 'none';
 
       // Clear tree container if it still exists in DOM
       const container = this.$refs.treeContainer;
       if (container) container.innerHTML = '';
     },
 
-    /** Alpine init hook — nothing needed at startup */
-    init() {},
+    /** Alpine init hook — create the shared drop indicator element */
+    init() {
+      this._dropIndicator = document.createElement('div');
+      this._dropIndicator.id = 'drop-indicator';
+      this._dropIndicator.style.cssText =
+        'position:fixed;height:2px;background:#4a90d9;pointer-events:none;display:none;z-index:1000';
+      document.body.appendChild(this._dropIndicator);
+    },
+
+    /** Handle dragstart on a folder header — per D-01, D-03 */
+    handleDragStart(node, parentId, e) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', node.id);
+      this.draggingNodeId = node.id;
+      this.draggingParentId = parentId;
+    },
+
+    /** Handle dragover on a folder header — per D-02 midpoint insertion line */
+    handleDragOver(node, parentId, e, headerEl) {
+      // Same-parent constraint per D-07 — only accept drops within same parent
+      if (!this.draggingNodeId || this.draggingParentId !== parentId) return;
+      // Don't allow drop on self
+      if (node.id === this.draggingNodeId) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+
+      // Midpoint calculation for insertion line position — per D-02
+      const rect = headerEl.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      this.dropInsertBefore = e.clientY < midY;
+      this.dropTargetNodeId = node.id;
+
+      const lineY = this.dropInsertBefore ? rect.top : rect.bottom;
+      this._dropIndicator.style.top = lineY + 'px';
+      this._dropIndicator.style.left = rect.left + 'px';
+      this._dropIndicator.style.width = rect.width + 'px';
+      this._dropIndicator.style.display = 'block';
+    },
+
+    /** Handle drop on a folder header — compute newIndex and call reorder API per D-05 */
+    handleDrop(node, e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this._dropIndicator.style.display = 'none';
+
+      if (!this.draggingNodeId || !this.draggingParentId) return;
+      if (node.id === this.draggingNodeId) { this.handleDragEnd(); return; }
+
+      // Find parent folder in classifiedTree to get children order
+      const parentFolder = this.findNode(this.classifiedTree, this.draggingParentId);
+      if (!parentFolder || parentFolder.type !== 'folder') { this.handleDragEnd(); return; }
+
+      const children = parentFolder.children ?? [];
+      const fromIndex = children.findIndex(c => c.id === this.draggingNodeId);
+      const targetIndex = children.findIndex(c => c.id === node.id);
+      if (fromIndex === -1 || targetIndex === -1) { this.handleDragEnd(); return; }
+
+      // Compute newIndex in post-removal array (per RESEARCH.md Pitfall 4)
+      let intendedIndex = this.dropInsertBefore ? targetIndex : targetIndex + 1;
+      const newIndex = intendedIndex > fromIndex ? intendedIndex - 1 : intendedIndex;
+
+      this.reorderOp(this.draggingNodeId, this.draggingParentId, newIndex);
+      this.handleDragEnd();
+    },
+
+    /** Clean up drag state — always fires even on cancelled drags per RESEARCH.md Pitfall 3 */
+    handleDragEnd() {
+      this.draggingNodeId = null;
+      this.draggingParentId = null;
+      this.dropTargetNodeId = null;
+      this.dropInsertBefore = null;
+      if (this._dropIndicator) this._dropIndicator.style.display = 'none';
+    },
+
+    /** Find a node by ID in a tree (recursive) */
+    findNode(node, targetId) {
+      if (!node) return null;
+      if (node.id === targetId) return node;
+      if (node.children) {
+        for (const child of node.children) {
+          const found = this.findNode(child, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    },
+
+    /** Execute a reorder operation via POST /api/edit — per D-05, D-06 */
+    async reorderOp(nodeId, parentFolderId, newIndex) {
+      try {
+        const res = await fetch('/api/edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ op: 'reorder', nodeId, parentFolderId, newIndex }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          this.errorMsg = data.error || 'Reorder failed';
+          return;
+        }
+        const data = await res.json();
+        this.classifiedTree = data.classifiedTree;
+        this.$nextTick(() => {
+          const container = this.$refs.rightPanel;
+          if (!container) return;
+          container.innerHTML = '';
+          renderTree(this.classifiedTree, container, 0, this.getRightPanelOptions());
+        });
+      } catch (err) {
+        this.errorMsg = 'Reorder failed — ' + (err.message || 'unknown error');
+      }
+    },
+
+    /** Build options for the right (classified) panel — includes edit + drag callbacks */
+    getRightPanelOptions() {
+      return {
+        editMode: true,
+        onContextMenu: (n, e) => this.openContextMenu(n, e),
+        onDragStart: (node, parentId, e) => this.handleDragStart(node, parentId, e),
+        onDragOver: (node, parentId, e, el) => this.handleDragOver(node, parentId, e, el),
+        onDrop: (node, e) => this.handleDrop(node, e),
+        onDragEnd: () => this.handleDragEnd(),
+      };
+    },
   }));
 });

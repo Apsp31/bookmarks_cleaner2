@@ -482,6 +482,26 @@
     }
 
     [x-cloak] { display: none !important; }
+
+    /* Drop indicator for drag-and-drop folder reordering */
+    #drop-indicator {
+      position: fixed;
+      height: 2px;
+      background: #4a90d9;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+      border-radius: 1px;
+    }
+
+    /* Cursor feedback on draggable folder headers */
+    .tree-folder-header[draggable="true"] {
+      cursor: grab;
+    }
+
+    .tree-folder-header[draggable="true"]:active {
+      cursor: grabbing;
+    }
   </style>
 </head>
 <body>
@@ -713,7 +733,7 @@
           </div>
           <div class="tree-panel">
             <h3>Proposed structure</h3>
-            <div x-ref="rightPanel" x-init="renderTree(classifiedTree, $el, 0, { editMode: true, onContextMenu: (node, e) => openContextMenu(node, e) })"></div>
+            <div x-ref="rightPanel" x-init="renderTree(classifiedTree, $el, 0, getRightPanelOptions())"></div>
           </div>
         </div>
       </div>
