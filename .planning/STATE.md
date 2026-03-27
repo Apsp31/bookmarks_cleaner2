@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Quality & Navigation
-status: Ready to execute
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-27T00:03:02.095Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-27T13:02:39.819Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 2 of 2
 | Phase 06-classification-quality P04 | 300 | 1 tasks | 2 files |
 | Phase 07-sub-categorisation P01 | 148 | 2 tasks | 2 files |
 | Phase 08-drag-and-drop P01 | 104 | 2 tasks | 3 files |
+| Phase 08 P02 | 25 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 07-sub-categorisation]: maybeSplitIntoSubfolders only splits Development in this phase; other oversized categories stay flat
 - [Phase 08-drag-and-drop]: reorderNode takes parentFolderId as explicit param — symmetric with newIndex and avoids ambiguity during traversal
 - [Phase 08-drag-and-drop]: newIndex is post-removal index (splice semantics) — clamped after removal so max valid index equals children.length post-splice
+- [Phase 08-02]: Drop indicator uses position:fixed appended to body in init() to avoid stacking context issues with tree scroll containers
+- [Phase 08-02]: getRightPanelOptions() factory method consolidates edit+drag callbacks ensuring editOp and reorderOp re-renders stay in sync
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:03:02.091Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-27T13:02:39.814Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

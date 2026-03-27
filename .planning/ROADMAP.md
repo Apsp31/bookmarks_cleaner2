@@ -71,7 +71,7 @@ Plans:
 **Plans:** 1/2 plans executed
 Plans:
 - [x] 08-01-PLAN.md — reorderNode pure function (TDD) + /api/edit reorder endpoint
-- [ ] 08-02-PLAN.md — Frontend drag event wiring, drop indicator, context menu guard, visual verification
+- [x] 08-02-PLAN.md — Frontend drag event wiring, drop indicator, context menu guard, visual verification
 **UI hint**: yes
 
 ## Progress
